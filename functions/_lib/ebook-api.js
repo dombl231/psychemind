@@ -178,8 +178,17 @@ export function json(data, status = 200) {
   });
 }
 
-export async function readJson(request) {
+export async function readJson(request, maxBytes = 8_000_000) {
+  const length = Number(request.headers.get("content-length") || 0);
+  if (length > maxBytes) {
+    throw new HttpError(413, "요청이 너무 큽니다.");
+  }
+
   const text = await request.text();
+  if (text.length > maxBytes) {
+    throw new HttpError(413, "요청이 너무 큽니다.");
+  }
+
   return text ? JSON.parse(text) : {};
 }
 
@@ -212,6 +221,29 @@ export async function callOpenAI(env, path, body) {
     throw new HttpError(response.status, data.error?.message || "OpenAI 요청에 실패했습니다.");
   }
   return data;
+}
+
+export function requireSameOrigin(request) {
+  const origin = request.headers.get("origin");
+  if (!origin) return;
+
+  const requestUrl = new URL(request.url);
+  if (origin !== requestUrl.origin) {
+    throw new HttpError(403, "허용되지 않은 요청 출처입니다.");
+  }
+}
+
+export function normalizeGenerateInput(body) {
+  return {
+    topic: clampText(body.topic, "수익형 전자책 만들기", 120),
+    audience: clampText(body.audience, "새로운 디지털 상품을 만들고 싶은 사람", 140),
+    tone: clampText(body.tone, "프리미엄 실전형", 40),
+  };
+}
+
+export function clampText(value, fallback, maxLength) {
+  const text = cleanText(value, fallback);
+  return text.length > maxLength ? text.slice(0, maxLength) : text;
 }
 
 export function getOutputText(result) {

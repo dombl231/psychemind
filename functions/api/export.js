@@ -1,11 +1,12 @@
-import { json, normalizeFormat, readJson, renderMarkdown, renderStandaloneHtml, sendFile, slugify } from "../_lib/ebook-api.js";
+import { HttpError, json, normalizeFormat, readJson, renderMarkdown, renderStandaloneHtml, requireSameOrigin, sendFile, slugify } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request }) {
   try {
+    requireSameOrigin(request);
     const body = await readJson(request);
     return exportEbook(body);
   } catch (error) {
-    return json({ error: error.message || "다운로드 파일 생성에 실패했습니다." }, 500);
+    return json({ error: error.message || "다운로드 파일 생성에 실패했습니다." }, error instanceof HttpError ? error.status : 500);
   }
 }
 

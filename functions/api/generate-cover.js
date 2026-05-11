@@ -1,12 +1,13 @@
-import { callOpenAI, cleanText, HttpError, json, readJson } from "../_lib/ebook-api.js";
+import { callOpenAI, cleanText, HttpError, json, readJson, requireSameOrigin } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request, env }) {
   try {
+    requireSameOrigin(request);
     if (env.ENABLE_IMAGE_GENERATION === "false") {
       return json({ coverImage: null, skipped: true });
     }
 
-    const body = await readJson(request);
+    const body = await readJson(request, 2_000_000);
     const ebook = body.ebook;
     const topic = cleanText(body.topic || ebook?.title, "전자책 표지");
 

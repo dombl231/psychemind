@@ -187,8 +187,6 @@ const server = http.createServer(async (request, response) => {
       sendJson(response, 200, {
         ok: true,
         hasOpenAIKey: Boolean(process.env.OPENAI_API_KEY),
-        model: writingModel,
-        imageModel,
         imagesEnabled: enableImages,
       });
       return;

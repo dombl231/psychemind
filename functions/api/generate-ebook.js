@@ -1,15 +1,14 @@
-import { buildEbookPrompt, callOpenAI, cleanText, ebookSchema, getOutputText, HttpError, json, readJson } from "../_lib/ebook-api.js";
+import { buildEbookPrompt, callOpenAI, ebookSchema, getOutputText, HttpError, json, normalizeGenerateInput, readJson, requireSameOrigin } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request, env }) {
   try {
-    const body = await readJson(request);
+    requireSameOrigin(request);
+    const body = await readJson(request, 32_000);
+    const payload = normalizeGenerateInput(body);
     const result = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.4",
-      input: buildEbookPrompt({
-        topic: cleanText(body.topic, "수익형 전자책 만들기"),
-        audience: cleanText(body.audience, "새로운 디지털 상품을 만들고 싶은 사람"),
-        tone: cleanText(body.tone, "프리미엄 실전형"),
-      }),
+      input: buildEbookPrompt(payload),
+      max_output_tokens: 18_000,
       text: {
         format: {
           type: "json_schema",
