@@ -1,13 +1,15 @@
-import { callOpenAI, cleanText, HttpError, json, readJson, requireSameOrigin } from "../_lib/ebook-api.js";
+import { callOpenAI, cleanText, enforceRateLimit, HttpError, json, readJson, requireSameOrigin, verifyTurnstile } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request, env }) {
   try {
     requireSameOrigin(request);
+    enforceRateLimit(request, { keyPrefix: "generate-cover", limit: Number(env.COVER_RATE_LIMIT || 8), windowMs: 60 * 60 * 1000 });
     if (env.ENABLE_IMAGE_GENERATION === "false") {
       return json({ coverImage: null, skipped: true });
     }
 
     const body = await readJson(request, 2_000_000);
+    await verifyTurnstile(request, env, body.turnstileToken);
     const ebook = body.ebook;
     const topic = cleanText(body.topic || ebook?.title, "전자책 표지");
 

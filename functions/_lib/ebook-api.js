@@ -223,6 +223,54 @@ export async function callOpenAI(env, path, body) {
   return data;
 }
 
+const rateLimitStore = globalThis.__monographRateLimitStore || new Map();
+globalThis.__monographRateLimitStore = rateLimitStore;
+
+export function enforceRateLimit(request, options = {}) {
+  const limit = options.limit || 6;
+  const windowMs = options.windowMs || 60 * 60 * 1000;
+  const keyPrefix = options.keyPrefix || "api";
+  const clientIp = getClientIp(request);
+  const now = Date.now();
+  const key = `${keyPrefix}:${clientIp}`;
+  const record = rateLimitStore.get(key);
+
+  if (!record || record.resetAt <= now) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    pruneRateLimitStore(now);
+    return;
+  }
+
+  if (record.count >= limit) {
+    throw new HttpError(429, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+  }
+
+  record.count += 1;
+}
+
+export async function verifyTurnstile(request, env, token) {
+  if (!env.TURNSTILE_SECRET_KEY) return;
+
+  if (!token) {
+    throw new HttpError(403, "보안 확인이 필요합니다. 페이지를 새로고침한 뒤 다시 시도해주세요.");
+  }
+
+  const form = new FormData();
+  form.append("secret", env.TURNSTILE_SECRET_KEY);
+  form.append("response", token);
+  form.append("remoteip", getClientIp(request));
+
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: form,
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.success) {
+    throw new HttpError(403, "보안 확인에 실패했습니다. 페이지를 새로고침한 뒤 다시 시도해주세요.");
+  }
+}
+
 export function requireSameOrigin(request) {
   const origin = request.headers.get("origin");
   if (!origin) return;
@@ -230,6 +278,21 @@ export function requireSameOrigin(request) {
   const requestUrl = new URL(request.url);
   if (origin !== requestUrl.origin) {
     throw new HttpError(403, "허용되지 않은 요청 출처입니다.");
+  }
+}
+
+function getClientIp(request) {
+  return (
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown"
+  );
+}
+
+function pruneRateLimitStore(now) {
+  if (rateLimitStore.size < 1000) return;
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (record.resetAt <= now) rateLimitStore.delete(key);
   }
 }
 

@@ -19,11 +19,14 @@ const progressBar = document.querySelector("#progressBar");
 const loadingSteps = [...document.querySelectorAll("#loadingSteps li")];
 const themeToggle = document.querySelector("#themeToggle");
 const templateButtons = [...document.querySelectorAll("[data-template]")];
+const appConfig = window.MONOGRAPH_CONFIG || {};
 
 let currentTemplate = "obsidian";
 let currentEbook = null;
 let progressTimer = null;
 let serverRuntime = "node";
+let turnstileWidgetId = null;
+let turnstileReadyPromise = null;
 
 const templateNames = {
   obsidian: "OBSIDIAN TEMPLATE",
@@ -173,6 +176,59 @@ function getFormPayload() {
   };
 }
 
+async function getTurnstileToken() {
+  if (!appConfig.turnstileSiteKey) return "";
+
+  await loadTurnstile();
+  return new Promise((resolve, reject) => {
+    const container = ensureTurnstileContainer();
+    const options = {
+      sitekey: appConfig.turnstileSiteKey,
+      size: "invisible",
+      callback: (token) => resolve(token),
+      "error-callback": () => reject(new Error("보안 확인에 실패했습니다. 잠시 후 다시 시도해주세요.")),
+      "expired-callback": () => reject(new Error("보안 확인 시간이 만료되었습니다. 다시 시도해주세요.")),
+    };
+
+    if (turnstileWidgetId === null) {
+      turnstileWidgetId = window.turnstile.render(container, options);
+    } else {
+      window.turnstile.reset(turnstileWidgetId);
+    }
+
+    window.turnstile.execute(turnstileWidgetId);
+  });
+}
+
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve();
+  if (turnstileReadyPromise) return turnstileReadyPromise;
+
+  turnstileReadyPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("보안 확인 스크립트를 불러오지 못했습니다."));
+    document.head.appendChild(script);
+  });
+
+  return turnstileReadyPromise;
+}
+
+function ensureTurnstileContainer() {
+  let container = document.querySelector("#turnstileContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "turnstileContainer";
+    container.className = "turnstile-container";
+    container.setAttribute("aria-hidden", "true");
+    generateButton.before(container);
+  }
+  return container;
+}
+
 async function checkServer() {
   setConnection("checking", "서버 상태 확인 중...");
   try {
@@ -199,10 +255,11 @@ async function generateEbook() {
   showLoading("프리미엄 전자책을 생성하는 중입니다", "풀패키지 기준으로 기획, 본문, 수익 사례, 판매 패키지를 작성하고 있습니다.");
 
   try {
+    const turnstileToken = await getTurnstileToken();
     const response = await fetch("/api/generate-ebook", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(getFormPayload()),
+      body: JSON.stringify({ ...getFormPayload(), turnstileToken }),
     });
     const data = await response.json();
 
@@ -234,10 +291,11 @@ async function generateEbook() {
 
 async function generateCoverForCurrentEbook() {
   try {
+    const turnstileToken = await getTurnstileToken();
     const response = await fetch("/api/generate-cover", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ebook: currentEbook, topic: topicInput.value }),
+      body: JSON.stringify({ ebook: currentEbook, topic: topicInput.value, turnstileToken }),
     });
     const data = await response.json();
     if (response.ok && data.coverImage) {

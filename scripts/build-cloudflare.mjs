@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const publicDir = path.join(root, "public");
 const staticFiles = ["index.html", "styles.css", "script.js"];
+const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY || "";
 
 await fs.rm(publicDir, { recursive: true, force: true });
 await fs.mkdir(publicDir, { recursive: true });
@@ -14,9 +15,15 @@ for (const file of staticFiles) {
 }
 
 await fs.writeFile(
+  path.join(publicDir, "config.js"),
+  `window.MONOGRAPH_CONFIG = ${JSON.stringify({ turnstileSiteKey }, null, 2)};\n`,
+  "utf8",
+);
+
+await fs.writeFile(
   path.join(publicDir, "_headers"),
   `/*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin

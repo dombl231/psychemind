@@ -1,9 +1,11 @@
-import { buildEbookPrompt, callOpenAI, ebookSchema, getOutputText, HttpError, json, normalizeGenerateInput, readJson, requireSameOrigin } from "../_lib/ebook-api.js";
+import { buildEbookPrompt, callOpenAI, ebookSchema, enforceRateLimit, getOutputText, HttpError, json, normalizeGenerateInput, readJson, requireSameOrigin, verifyTurnstile } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request, env }) {
   try {
     requireSameOrigin(request);
+    enforceRateLimit(request, { keyPrefix: "generate-ebook", limit: Number(env.EBOOK_RATE_LIMIT || 4), windowMs: 60 * 60 * 1000 });
     const body = await readJson(request, 32_000);
+    await verifyTurnstile(request, env, body.turnstileToken);
     const payload = normalizeGenerateInput(body);
     const result = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.4",

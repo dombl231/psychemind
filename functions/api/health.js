@@ -5,6 +5,7 @@ export function onRequestGet({ env }) {
     ok: true,
     hasOpenAIKey: Boolean(env.OPENAI_API_KEY),
     imagesEnabled: env.ENABLE_IMAGE_GENERATION !== "false",
+    turnstileRequired: Boolean(env.TURNSTILE_SECRET_KEY),
     runtime: "cloudflare-pages",
   });
 }

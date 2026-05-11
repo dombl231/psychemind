@@ -522,6 +522,12 @@ select option {
   line-height: 1.6;
 }
 
+.turnstile-container {
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .connection-card {
   display: flex;
   align-items: center;
