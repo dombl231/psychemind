@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monograph AI - 수익형 전자책 제작소</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20260511b" />
+  </head>
+  <body>
+    <div class="loading-layer" id="loadingLayer" hidden>
+      <div class="loading-panel" role="status" aria-live="polite">
+        <div class="loader-ring" aria-hidden="true"></div>
+        <p class="eyebrow">AI EBOOK ENGINE</p>
+        <h2 id="loadingTitle">전자책을 생성하는 중입니다</h2>
+        <p id="loadingMessage">OpenAI가 목차와 판매 패키지를 설계하고 있습니다.</p>
+        <div class="progress-track"><span id="progressBar"></span></div>
+        <ol class="loading-steps" id="loadingSteps">
+          <li class="is-active">주제 분석</li>
+          <li>목차 설계</li>
+          <li>원고 초안</li>
+          <li>판매 패키지</li>
+        </ol>
+      </div>
+    </div>
+
+    <header class="site-header" aria-label="주요 메뉴">
+      <a class="brand" href="#top" aria-label="Monograph AI 홈">
+        <span class="brand-mark">M</span>
+        <span>
+          <strong>MONOGRAPH AI</strong>
+          <small>ebook profit studio</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="페이지 섹션">
+        <a href="#studio">제작</a>
+        <a href="#templates">템플릿</a>
+        <a href="#market">수익화</a>
+        <a href="#download">다운로드</a>
+      </nav>
+      <button class="icon-button" type="button" id="themeToggle" aria-label="테마 전환" title="테마 전환">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">AI EBOOK MONETIZATION PLATFORM</p>
+          <h1 id="hero-title">주제 하나로 팔리는 전자책을 완성합니다</h1>
+          <p class="hero-text">OpenAI가 원고, 목차, 표지 문구, 판매 페이지 문구까지 설계하고 서버에서 PDF, HTML, Markdown, JSON으로 내보냅니다.</p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#studio">전자책 만들기</a>
+            <a class="secondary-action" href="#templates">템플릿 보기</a>
+          </div>
+        </div>
+        <div class="machine-visual" aria-hidden="true">
+          <div class="book-rig">
+            <div class="book-cover">
+              <span>MONOGRAPH</span>
+              <strong id="coverTitle">직장인을 위한 AI 자동화 부업</strong>
+              <small>premium ebook template</small>
+            </div>
+            <div class="page-stack page-one"></div>
+            <div class="page-stack page-two"></div>
+            <div class="gold-line"></div>
+          </div>
+          <div class="spec spec-a">OpenAI 원고 생성</div>
+          <div class="spec spec-b">판매 문구 자동화</div>
+          <div class="spec spec-c">다중 파일 다운로드</div>
+        </div>
+      </section>
+
+      <section class="feature-strip" aria-label="핵심 기능">
+        <article>
+          <span>01</span>
+          <strong>AI 목차 엔진</strong>
+          <p>주제와 독자에 맞춰 구매 욕구가 생기는 문제 해결형 목차를 만듭니다.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <strong>원고 생성</strong>
+          <p>OpenAI API가 챕터별 핵심 내용과 도입부를 구조화해서 작성합니다.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <strong>수익화 패키지</strong>
+          <p>가격, 보너스, 상세페이지 문구, FAQ까지 함께 제안합니다.</p>
+        </article>
+        <article>
+          <span>04</span>
+          <strong>파일 내보내기</strong>
+          <p>PDF, HTML, Markdown, JSON 형식으로 직접 다운로드합니다.</p>
+        </article>
+      </section>
+
+      <section class="studio" id="studio" aria-labelledby="studio-title">
+        <div class="section-heading">
+          <p class="eyebrow">BUILD STUDIO</p>
+          <h2 id="studio-title">전자책 제작 콘솔</h2>
+          <p>서버 연결 상태와 생성 진행률을 확인하면서 전자책을 만들 수 있습니다.</p>
+        </div>
+
+        <div class="workspace">
+          <form class="builder-panel" id="ebookForm">
+            <div class="connection-card" id="connectionCard">
+              <span class="connection-dot" id="connectionDot"></span>
+              <p id="connectionState">서버 상태 확인 중...</p>
+            </div>
+            <label>
+              <span>전자책 주제</span>
+              <input id="topicInput" type="text" value="직장인을 위한 AI 자동화 부업" maxlength="70" />
+            </label>
+            <label>
+              <span>타깃 독자</span>
+              <input id="audienceInput" type="text" value="퇴근 후 부수입을 만들고 싶은 초보자" maxlength="80" />
+            </label>
+            <div class="field-row">
+              <label>
+                <span>톤</span>
+                <select id="toneInput">
+                  <option>프리미엄 실전형</option>
+                  <option>친절한 입문형</option>
+                  <option>전문가 리포트형</option>
+                </select>
+              </label>
+              <div class="fixed-package" aria-label="생성 범위">
+                <span>생성 범위</span>
+                <strong>프리미엄 풀패키지</strong>
+              </div>
+            </div>
+            <div class="template-picker" id="templatePicker" aria-label="템플릿 선택">
+              <button class="template-chip is-active" type="button" data-template="obsidian">Obsidian</button>
+              <button class="template-chip" type="button" data-template="ivory">Ivory</button>
+              <button class="template-chip" type="button" data-template="graphite">Graphite</button>
+            </div>
+            <p class="status-line" id="statusLine">입력 후 OpenAI 생성 버튼을 눌러주세요.</p>
+            <button class="generate-button" id="generateButton" type="submit">OpenAI로 전자책 생성</button>
+          </form>
+
+          <aside class="preview-panel" id="download" aria-label="전자책 미리보기">
+            <div class="preview-toolbar">
+              <span id="templateLabel">OBSIDIAN TEMPLATE</span>
+              <div class="download-controls">
+                <select id="downloadFormat" aria-label="다운로드 형식 선택">
+                  <option value="pdf">PDF</option>
+                  <option value="html">HTML</option>
+                  <option value="markdown">Markdown</option>
+                  <option value="json">JSON</option>
+                </select>
+                <button class="download-button" id="downloadButton" type="button">다운로드</button>
+              </div>
+            </div>
+            <article class="ebook-preview" id="ebookPreview"></article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="templates" id="templates" aria-labelledby="templates-title">
+        <div class="section-heading">
+          <p class="eyebrow">PRODUCT TEMPLATES</p>
+          <h2 id="templates-title">팔리는 상품처럼 보이게</h2>
+        </div>
+        <div class="template-grid">
+          <button class="template-card" type="button" data-template="obsidian">
+            <span class="cover-swatch swatch-dark"></span>
+            <strong>Obsidian</strong>
+            <small>프리미엄 강의 자료와 컨설팅 리드 상품에 적합</small>
+          </button>
+          <button class="template-card" type="button" data-template="ivory">
+            <span class="cover-swatch swatch-light"></span>
+            <strong>Ivory</strong>
+            <small>브런치, 뉴스레터, 자기계발 전자책에 적합</small>
+          </button>
+          <button class="template-card" type="button" data-template="graphite">
+            <span class="cover-swatch swatch-steel"></span>
+            <strong>Graphite</strong>
+            <small>B2B 리포트, 체크리스트, 실무 매뉴얼에 적합</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="market" id="market" aria-labelledby="market-title">
+        <div>
+          <p class="eyebrow">MONETIZATION</p>
+          <h2 id="market-title">전자책 판매 런칭 매뉴얼</h2>
+          <p class="market-intro">전자책 파일을 만든 뒤 실제로 판매 페이지를 만들고, 배포 채널에 올리고, 첫 구매와 후기를 만드는 순서입니다.</p>
+        </div>
+        <div class="market-list">
+          <article>
+            <strong>1. 판매 파일 준비</strong>
+            <span>PDF, 미리보기 3~5페이지, 목차 이미지, 보너스 파일을 준비하고 파일명을 상품명 기준으로 정리합니다.</span>
+            <ol>
+              <li>PDF 최종본을 열어 표지, 목차, 본문, 보너스 구성이 자연스럽게 들어갔는지 확인합니다.</li>
+              <li>무료 미리보기용 PDF를 3~5페이지로 따로 저장합니다.</li>
+              <li>구매자에게 줄 보너스 체크리스트나 템플릿을 하나 이상 준비합니다.</li>
+            </ol>
+          </article>
+          <article>
+            <strong>2. 판매처 개설</strong>
+            <span>초기에는 복잡한 쇼핑몰보다 Gumroad, 크몽, 탈잉, 클래스101, 스마트스토어, Notion+결제 링크 중 하나로 시작합니다.</span>
+            <ol>
+              <li>국내 판매는 크몽/탈잉/스마트스토어, 글로벌 테스트는 Gumroad를 우선 검토합니다.</li>
+              <li>상품명, 가격, 대표 이미지, 상세 설명, 환불 기준을 등록합니다.</li>
+              <li>결제 후 파일 전달 방식이 자동인지 수동인지 확인합니다.</li>
+            </ol>
+          </article>
+          <article>
+            <strong>3. 판매 페이지 작성</strong>
+            <span>문제 제기, 얻는 결과, 목차, 보너스, FAQ, 구매 안내 순서로 작성합니다.</span>
+            <ol>
+              <li>첫 문단에는 “누구를 위한 책인지”와 “읽고 나면 무엇을 할 수 있는지”를 씁니다.</li>
+              <li>목차와 실행 결과물을 캡처 이미지로 보여줍니다.</li>
+              <li>판매자가 직접 운영할 고객 안내 문구와 전달 방식을 정합니다.</li>
+            </ol>
+          </article>
+          <article>
+            <strong>4. 배포 채널 운영</strong>
+            <span>블로그, 브런치, 네이버 카페, 인스타그램, 유튜브 쇼츠, 스레드, 뉴스레터에 같은 메시지를 채널별로 바꿔 배포합니다.</span>
+            <ol>
+              <li>블로그/브런치에는 문제 해결형 글과 무료 미리보기를 올립니다.</li>
+              <li>쇼츠/릴스에는 책의 체크리스트 1개를 20~30초 팁으로 바꿔 올립니다.</li>
+              <li>카페/커뮤니티에는 광고 문구보다 실제 도움 되는 요약 글을 먼저 올립니다.</li>
+            </ol>
+          </article>
+          <article>
+            <strong>5. 첫 구매 만들기</strong>
+            <span>처음 10명은 정가 판매보다 피드백 확보가 중요합니다. 얼리버드 가격과 후기 요청 문구를 준비합니다.</span>
+            <ol>
+              <li>출시 7일 동안만 적용할 얼리버드 가격을 정합니다.</li>
+              <li>구매자에게 “막힌 부분 1개와 좋았던 부분 1개”를 물어봅니다.</li>
+              <li>후기를 받은 뒤 판매 페이지의 신뢰 섹션에 반영합니다.</li>
+            </ol>
+          </article>
+          <article>
+            <strong>6. 출시 후 점검</strong>
+            <span>조회수보다 판매 페이지 클릭률, 결제 전 이탈, 문의 내용, 후기 키워드를 보고 다음 버전을 개선합니다.</span>
+            <ol>
+              <li>유입 채널별 클릭 수와 구매 수를 기록합니다.</li>
+              <li>문의가 반복되는 부분은 FAQ와 본문에 추가합니다.</li>
+              <li>다음 상품은 구매자가 가장 많이 막힌 지점에서 기획합니다.</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>MONOGRAPH AI</strong>
+        <span>주제에서 상품까지, 전자책 수익화 제작소</span>
+      </div>
+      <div class="footer-info">
+        <span>사업자등록번호 202-44-67028</span>
+        <a href="mailto:ohmunxx01@gmail.com">제휴 문의 ohmunxx01@gmail.com</a>
+      </div>
+    </footer>
+
+    <script src="script.js?v=20260511b"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "monograph-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build:cloudflare": "node scripts/build-cloudflare.mjs",
+    "dev:cloudflare": "npm run build:cloudflare && npx wrangler pages dev public",
+    "deploy:cloudflare": "npm run build:cloudflare && npx wrangler pages deploy public"
+  },
+  "dependencies": {
+    "openai": "^6.9.1",
+    "playwright": "^1.59.1"
+  }
+}
