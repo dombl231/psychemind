@@ -2,6 +2,9 @@
 
 이 프로젝트는 로컬 개발용 `server.mjs`와 Cloudflare Pages 배포용 `functions/api/*`를 함께 둡니다.
 
+현재 GitHub 자동 배포용 Cloudflare Pages 프로젝트는 `psychemind`입니다.
+이전 `monograph-ai` 프로젝트는 Direct Upload 방식으로 만들어진 배포본이며, Cloudflare 정책상 나중에 Git source를 붙일 수 없습니다.
+
 ## 배포 구조
 
 - 정적 파일: `index.html`, `styles.css`, `script.js`
@@ -45,11 +48,13 @@ Cloudflare Pages Git 연결을 쓰는 경우:
 
 - Build command: `npm run build:cloudflare`
 - Build output directory: `public`
+- Production branch: `main`
+- Project: `psychemind`
 
 Wrangler로 직접 배포하는 경우:
 
 ```bash
 npx wrangler login
-npx wrangler pages project create monograph-ai
+npx wrangler pages project create psychemind
 npm run deploy:cloudflare
 ```
