@@ -21,6 +21,7 @@ const loadingSteps = [...document.querySelectorAll("#loadingSteps li")];
 const themeToggle = document.querySelector("#themeToggle");
 const templateButtons = [...document.querySelectorAll("[data-template]")];
 const appConfig = window.MONOGRAPH_CONFIG || {};
+const apiBaseUrl = appConfig.apiBaseUrl || (["monographai.co.kr", "www.monographai.co.kr"].includes(window.location.hostname) ? "https://psychemind.pages.dev" : "");
 
 let currentTemplate = "obsidian";
 let currentEbook = null;
@@ -36,12 +37,16 @@ const templateNames = {
   graphite: "GRAPHITE TEMPLATE",
 };
 
+function apiUrl(path) {
+  return `${apiBaseUrl}${path}`;
+}
+
 const sampleEbook = {
   title: "직장인을 위한 AI 자동화 부업",
   subtitle: "퇴근 후 부수입을 만들고 싶은 초보자를 위한 프리미엄 실전형 전자책",
-  authorName: "한서준",
+  authorName: "",
   audience: "퇴근 후 부수입을 만들고 싶은 초보자",
-  pageCount: 60,
+  pageCount: 96,
   coverImagePrompt: "프리미엄 업무용 책상 위에 노트북, 노트, 은은한 금색 조명이 있는 고급 편집 사진. 이미지 안에 글자 없음.",
   editorNote: "이 책은 퇴근 후 짧은 시간을 현실적인 부업 구조로 바꾸고 싶은 독자를 위해 기획되었습니다.",
   quickStartRoadmap: [
@@ -233,7 +238,7 @@ function ensureTurnstileContainer() {
 async function checkServer() {
   setConnection("checking", "서버 상태 확인 중...");
   try {
-    const response = await fetch(`/api/health?t=${Date.now()}`, { cache: "no-store" });
+    const response = await fetch(apiUrl(`/api/health?t=${Date.now()}`), { cache: "no-store" });
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error("서버 상태 확인 실패");
     serverRuntime = data.runtime || "node";
@@ -253,30 +258,47 @@ async function checkServer() {
 
 async function generateEbook() {
   setBusy(true, "MONOGRAPH AI 생성 요청을 보냈습니다.");
-  showLoading("MONOGRAPH AI가 전자책을 생성 중입니다", "긴 본문 원고, 세부 실행 순서, 수익 사례, 판매 패키지를 함께 작성하고 있습니다.");
+  showLoading("기획 패키지를 생성 중입니다", "주제, 독자, 수익 구조, 판매 패키지를 먼저 설계하고 있습니다.");
+  updateLoadingProgress(12, 0, "기획 패키지를 생성 중입니다", "주제와 독자, 판매 구조를 분석하고 있습니다.");
 
   try {
     const turnstileToken = await getTurnstileToken();
-    const response = await fetch("/api/generate-ebook", {
+    const payload = { ...getFormPayload(), turnstileToken };
+    const packageResponse = await fetch(apiUrl("/api/generate-package"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...getFormPayload(), turnstileToken }),
+      body: JSON.stringify(payload),
     });
-    const data = await response.json();
+    const packageData = await packageResponse.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || "전자책 생성에 실패했습니다.");
+    if (!packageResponse.ok) {
+      throw new Error(packageData.error || "전자책 기획 생성에 실패했습니다.");
     }
 
-    currentEbook = normalizeEbook(data.ebook);
+    updateLoadingProgress(38, 1, "챕터 원고를 생성 중입니다", "90페이지 이상 분량을 목표로 긴 본문과 실행 단계를 작성하고 있습니다.");
+
+    const chaptersResponse = await fetch(apiUrl("/api/generate-chapters"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, ebook: packageData.ebook }),
+    });
+    const chaptersData = await chaptersResponse.json();
+
+    if (!chaptersResponse.ok) {
+      throw new Error(chaptersData.error || "챕터 원고 생성에 실패했습니다.");
+    }
+
+    updateLoadingProgress(82, 2, "미리보기를 정리하고 있습니다", "본문, 목차, 판매 문구를 템플릿에 맞게 배치하고 있습니다.");
+
+    currentEbook = normalizeEbook({ ...packageData.ebook, chapters: chaptersData.chapters || [] });
     hasGeneratedEbook = true;
     renderPreview();
     renderSalesCopyPanel();
-    loadingTitle.textContent = "MONOGRAPH AI가 표지 이미지를 생성 중입니다";
-    loadingMessage.textContent = "확장 원고는 준비됐고, 이제 표지 이미지를 붙이고 있습니다.";
+    setStatus("전자책 본문 생성 완료. 표지 이미지를 정리하고 있습니다.");
+    updateLoadingProgress(92, 3, "표지 이미지를 생성 중입니다", "본문 생성은 완료되었습니다. 표지를 붙이고 완료 상태를 표시합니다.");
     await generateCoverForCurrentEbook();
-    setStatus("확장형 프리미엄 전자책 생성 완료. 원하는 형식으로 다운로드할 수 있습니다.");
-    finishLoading("생성 완료", "상세 원고와 표지 이미지가 준비되었습니다.");
+    setStatus("생성 완료. 원하는 형식으로 다운로드할 수 있습니다.");
+    finishLoading("생성 완료", "90페이지 이상 분량의 전자책 패키지가 준비되었습니다.");
     preview.animate(
       [
         { transform: "translateY(10px)", opacity: 0.65 },
@@ -295,7 +317,7 @@ async function generateEbook() {
 async function generateCoverForCurrentEbook() {
   try {
     const turnstileToken = await getTurnstileToken();
-    const response = await fetch("/api/generate-cover", {
+    const response = await fetch(apiUrl("/api/generate-cover"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ebook: currentEbook, topic: topicInput.value, turnstileToken }),
@@ -323,7 +345,7 @@ async function downloadCurrentEbook() {
   showLoading("파일을 생성하는 중입니다", `${formatLabel} 형식으로 전자책을 내보내고 있습니다.`, false);
 
   try {
-    const response = await fetch("/api/export", {
+    const response = await fetch(apiUrl("/api/export"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ebook: currentEbook, template: currentTemplate, format }),
@@ -425,26 +447,20 @@ function setTemplate(template) {
 }
 
 function showLoading(title, message, useSteps = true) {
-  let progress = 12;
   loadingLayer.hidden = false;
+  preview.hidden = true;
+  if (salesCopyPanel) salesCopyPanel.hidden = true;
+  clearInterval(progressTimer);
+  updateLoadingProgress(useSteps ? 8 : 20, 0, title, message);
+}
+
+function updateLoadingProgress(progress, activeIndex, title, message) {
   loadingTitle.textContent = title;
   loadingMessage.textContent = message;
-  progressBar.style.width = `${progress}%`;
-  loadingSteps.forEach((step, index) => step.classList.toggle("is-active", index === 0));
-  clearInterval(progressTimer);
-
-  progressTimer = setInterval(() => {
-    progress = Math.min(progress + (useSteps ? 9 : 16), 92);
-    progressBar.style.width = `${progress}%`;
-    const activeIndex = Math.min(Math.floor(progress / 25), loadingSteps.length - 1);
-    loadingSteps.forEach((step, index) => {
-      step.classList.toggle("is-active", index <= activeIndex);
-    });
-    if (useSteps) {
-      const messages = ["목차를 설계하고 있습니다.", "챕터 요약을 작성하고 있습니다.", "판매 자료와 내보내기를 구성하고 있습니다.", "미리보기를 정리하고 있습니다."];
-      loadingMessage.textContent = messages[Math.min(activeIndex, messages.length - 1)];
-    }
-  }, 900);
+  progressBar.style.width = `${Math.max(0, Math.min(progress, 100))}%`;
+  loadingSteps.forEach((step, index) => {
+    step.classList.toggle("is-active", index <= activeIndex);
+  });
 }
 
 function finishLoading(title, message) {
@@ -453,12 +469,14 @@ function finishLoading(title, message) {
   loadingSteps.forEach((step) => step.classList.add("is-active"));
   loadingTitle.textContent = title;
   loadingMessage.textContent = message;
-  setTimeout(hideLoading, 650);
+  setTimeout(hideLoading, 1800);
 }
 
 function hideLoading() {
   clearInterval(progressTimer);
   loadingLayer.hidden = true;
+  preview.hidden = false;
+  if (currentEbook && hasGeneratedEbook) renderSalesCopyPanel();
 }
 
 function setConnection(state, message) {
@@ -485,7 +503,7 @@ function normalizeEbook(ebook) {
     title: cleanValue(ebook?.title, fallback.title),
     subtitle: cleanValue(ebook?.subtitle, fallback.subtitle),
     audience: cleanValue(ebook?.audience, fallback.audience),
-    pageCount: Number(ebook?.pageCount) || fallback.pageCount,
+    pageCount: Math.max(Number(ebook?.pageCount) || fallback.pageCount, 90),
     introduction: cleanValue(ebook?.introduction, fallback.introduction),
     quickStartRoadmap: ensureArray(ebook?.quickStartRoadmap, fallback.quickStartRoadmap),
     toolStack: ensureArray(ebook?.toolStack, fallback.toolStack),
@@ -515,7 +533,7 @@ function normalizeEbook(ebook) {
     },
     bonuses: ensureArray(ebook?.bonuses, fallback.bonuses),
     launchChecklist: ensureArray(ebook?.launchChecklist, fallback.launchChecklist),
-    authorName: cleanValue(ebook?.authorName, fallback.authorName),
+    authorName: "",
     coverImagePrompt: cleanValue(ebook?.coverImagePrompt, fallback.coverImagePrompt),
     editorNote: cleanValue(ebook?.editorNote, fallback.editorNote),
     closingNote: cleanValue(ebook?.closingNote, fallback.closingNote),

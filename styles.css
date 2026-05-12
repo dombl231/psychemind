@@ -1066,22 +1066,23 @@ select option {
 }
 
 .loading-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
+  position: relative;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.68);
-  padding: 22px;
-  backdrop-filter: blur(14px);
+  min-height: 520px;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(240, 201, 120, 0.12), transparent 26%),
+    linear-gradient(145deg, #0b0b0a, #171511);
+  padding: clamp(18px, 4vw, 38px);
 }
 
 .loading-panel {
-  width: min(520px, 100%);
+  width: 100%;
+  max-width: 520px;
   border: 1px solid rgba(240, 201, 120, 0.28);
   border-radius: 12px;
-  background: linear-gradient(145deg, #11100e, #050505);
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  background: rgba(5, 5, 5, 0.46);
   padding: 32px;
   text-align: center;
 }

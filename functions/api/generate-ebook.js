@@ -10,6 +10,7 @@ export async function onRequestPost({ request, env }) {
     const packageResult = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.5",
       input: buildEbookPackagePrompt(payload),
+      reasoning: { effort: "low" },
       max_output_tokens: 12_000,
       text: {
         format: {
@@ -21,11 +22,14 @@ export async function onRequestPost({ request, env }) {
       },
     });
     const ebook = JSON.parse(getOutputText(packageResult));
+    ebook.authorName = "";
+    ebook.pageCount = Math.max(Number(ebook.pageCount) || 90, 90);
 
     const chaptersResult = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.5",
       input: buildChaptersPrompt(payload, ebook),
-      max_output_tokens: 20_000,
+      reasoning: { effort: "low" },
+      max_output_tokens: 28_000,
       text: {
         format: {
           type: "json_schema",
@@ -36,6 +40,7 @@ export async function onRequestPost({ request, env }) {
       },
     });
     ebook.chapters = JSON.parse(getOutputText(chaptersResult)).chapters;
+    ebook.authorName = "";
     ebook.coverImage = null;
     return json({ ebook });
   } catch (error) {

@@ -13,26 +13,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260512c" />
+    <link rel="stylesheet" href="styles.css?v=20260513a" />
   </head>
   <body>
-    <div class="loading-layer" id="loadingLayer" hidden>
-      <div class="loading-panel" role="status" aria-live="polite">
-        <div class="loader-ring" aria-hidden="true"></div>
-        <p class="eyebrow">AI EBOOK ENGINE</p>
-        <h2 id="loadingTitle">MONOGRAPH AI가 전자책을 생성 중입니다</h2>
-        <p id="loadingMessage">MONOGRAPH AI가 목차와 판매 패키지를 설계하고 있습니다.</p>
-        <p class="loading-estimate">평균 생성 시간은 5~10분입니다. 창을 닫지 말고 잠시만 기다려 주세요.</p>
-        <div class="progress-track"><span id="progressBar"></span></div>
-        <ol class="loading-steps" id="loadingSteps">
-          <li class="is-active">주제 분석</li>
-          <li>목차 설계</li>
-          <li>원고 초안</li>
-          <li>판매 패키지</li>
-        </ol>
-      </div>
-    </div>
-
     <header class="site-header" aria-label="주요 메뉴">
       <a class="brand" href="#top" aria-label="Monograph AI 홈">
         <span class="brand-mark">M</span>
@@ -160,6 +143,22 @@
                 <button class="download-button" id="downloadButton" type="button">다운로드</button>
               </div>
             </div>
+            <div class="loading-layer" id="loadingLayer" hidden>
+              <div class="loading-panel" role="status" aria-live="polite">
+                <div class="loader-ring" aria-hidden="true"></div>
+                <p class="eyebrow">AI EBOOK ENGINE</p>
+                <h2 id="loadingTitle">기획 패키지를 생성 중입니다</h2>
+                <p id="loadingMessage">주제와 독자, 판매 구조를 분석하고 있습니다.</p>
+                <p class="loading-estimate">실제 완료된 단계 기준으로 진행률을 표시합니다.</p>
+                <div class="progress-track"><span id="progressBar"></span></div>
+                <ol class="loading-steps" id="loadingSteps">
+                  <li class="is-active">기획</li>
+                  <li>원고</li>
+                  <li>정리</li>
+                  <li>완료</li>
+                </ol>
+              </div>
+            </div>
             <article class="ebook-preview" id="ebookPreview"></article>
             <section class="sales-copy-panel" id="salesCopyPanel" hidden></section>
           </aside>
@@ -269,6 +268,6 @@
     </footer>
 
     <script src="config.js?v=20260511b"></script>
-    <script src="script.js?v=20260512c"></script>
+    <script src="script.js?v=20260513a"></script>
   </body>
 </html>
