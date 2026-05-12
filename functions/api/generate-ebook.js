@@ -8,7 +8,7 @@ export async function onRequestPost({ request, env }) {
     await verifyTurnstile(request, env, body.turnstileToken);
     const payload = normalizeGenerateInput(body);
     const packageResult = await callOpenAI(env, "responses", {
-      model: env.OPENAI_MODEL || "gpt-5.4",
+      model: env.OPENAI_MODEL || "gpt-5.5",
       input: buildEbookPackagePrompt(payload),
       max_output_tokens: 12_000,
       text: {
@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     const ebook = JSON.parse(getOutputText(packageResult));
 
     const chaptersResult = await callOpenAI(env, "responses", {
-      model: env.OPENAI_MODEL || "gpt-5.4",
+      model: env.OPENAI_MODEL || "gpt-5.5",
       input: buildChaptersPrompt(payload, ebook),
       max_output_tokens: 20_000,
       text: {

@@ -230,9 +230,28 @@ export async function callOpenAI(env, path, body) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new HttpError(response.status, data.error?.message || "생성 요청에 실패했습니다.");
+    throw new HttpError(response.status, formatOpenAIError(data.error));
   }
   return data;
+}
+
+function formatOpenAIError(error = {}) {
+  const message = error.message || "";
+  const code = error.code || "";
+
+  if (code === "insufficient_quota" || message.includes("exceeded your current quota")) {
+    return "OpenAI API 쿼터가 부족하거나 결제 설정이 필요합니다. OpenAI Platform의 Billing/Usage를 확인한 뒤 다시 시도해 주세요.";
+  }
+
+  if (message.includes("Country, region, or territory not supported")) {
+    return "OpenAI API가 현재 계정 또는 요청 지역을 지원하지 않아 생성이 차단되었습니다. OpenAI 계정의 국가/결제 설정과 Cloudflare에 등록된 API 키를 확인해 주세요.";
+  }
+
+  if (message.includes("model") && (message.includes("does not exist") || message.includes("not found") || message.includes("not have access"))) {
+    return "설정된 OpenAI 모델에 접근할 수 없습니다. Cloudflare 환경 변수 OPENAI_MODEL이 gpt-5.5인지, 해당 프로젝트가 GPT-5.5 사용 권한이 있는지 확인해 주세요.";
+  }
+
+  return message || "OpenAI 생성 요청에 실패했습니다.";
 }
 
 const rateLimitStore = globalThis.__monographRateLimitStore || new Map();

@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 loadDotEnv();
 
 const port = Number(process.env.PORT || 4173);
-const writingModel = process.env.OPENAI_MODEL || "gpt-5.4";
+const writingModel = process.env.OPENAI_MODEL || "gpt-5.5";
 const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1.5";
 const enableImages = process.env.ENABLE_IMAGE_GENERATION !== "false";
 const client = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;

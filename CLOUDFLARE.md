@@ -20,7 +20,7 @@ Cloudflare Pages 프로젝트 설정의 Environment variables에 아래 값을 �
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-5.4
+OPENAI_MODEL=gpt-5.5
 OPENAI_IMAGE_MODEL=gpt-image-1.5
 ENABLE_IMAGE_GENERATION=true
 TURNSTILE_SITE_KEY=your_public_turnstile_site_key
