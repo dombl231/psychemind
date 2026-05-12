@@ -10,7 +10,7 @@ export async function onRequestPost({ request, env }) {
     const result = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.4",
       input: buildEbookPrompt(payload),
-      max_output_tokens: 18_000,
+      max_output_tokens: 28_000,
       text: {
         format: {
           type: "json_schema",

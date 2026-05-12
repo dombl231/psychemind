@@ -50,8 +50,8 @@ const ebookSchema = {
     introduction: { type: "string" },
     quickStartRoadmap: {
       type: "array",
-      minItems: 7,
-      maxItems: 10,
+      minItems: 10,
+      maxItems: 14,
       items: {
         type: "object",
         additionalProperties: false,
@@ -59,15 +59,15 @@ const ebookSchema = {
         properties: {
           day: { type: "string" },
           goal: { type: "string" },
-          tasks: { type: "array", minItems: 3, maxItems: 6, items: { type: "string" } },
+          tasks: { type: "array", minItems: 5, maxItems: 8, items: { type: "string" } },
           output: { type: "string" },
         },
       },
     },
     toolStack: {
       type: "array",
-      minItems: 6,
-      maxItems: 10,
+      minItems: 8,
+      maxItems: 12,
       items: {
         type: "object",
         additionalProperties: false,
@@ -95,8 +95,8 @@ const ebookSchema = {
     },
     revenueCaseStudies: {
       type: "array",
-      minItems: 5,
-      maxItems: 6,
+      minItems: 6,
+      maxItems: 8,
       items: {
         type: "object",
         additionalProperties: false,
@@ -123,12 +123,12 @@ const ebookSchema = {
         properties: {
           title: { type: "string" },
           opening: { type: "string" },
-          body: { type: "array", minItems: 4, maxItems: 6, items: { type: "string" } },
+          body: { type: "array", minItems: 8, maxItems: 10, items: { type: "string" } },
           caseStudy: { type: "string" },
           requiredTools: {
             type: "array",
-            minItems: 3,
-            maxItems: 7,
+            minItems: 4,
+            maxItems: 8,
             items: {
               type: "object",
               additionalProperties: false,
@@ -140,12 +140,12 @@ const ebookSchema = {
               },
             },
           },
-          stepByStep: { type: "array", minItems: 6, maxItems: 9, items: { type: "string" } },
-          platformActions: { type: "array", minItems: 4, maxItems: 8, items: { type: "string" } },
-          qualityChecklist: { type: "array", minItems: 4, maxItems: 8, items: { type: "string" } },
-          commonMistakes: { type: "array", minItems: 3, maxItems: 6, items: { type: "string" } },
-          actionItems: { type: "array", minItems: 4, maxItems: 6, items: { type: "string" } },
-          reflectionQuestions: { type: "array", minItems: 2, maxItems: 4, items: { type: "string" } },
+          stepByStep: { type: "array", minItems: 10, maxItems: 14, items: { type: "string" } },
+          platformActions: { type: "array", minItems: 6, maxItems: 10, items: { type: "string" } },
+          qualityChecklist: { type: "array", minItems: 6, maxItems: 10, items: { type: "string" } },
+          commonMistakes: { type: "array", minItems: 5, maxItems: 8, items: { type: "string" } },
+          actionItems: { type: "array", minItems: 6, maxItems: 9, items: { type: "string" } },
+          reflectionQuestions: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } },
         },
       },
     },
@@ -237,11 +237,12 @@ async function handleGenerateEbook(request, response) {
 
   const result = await client.responses.create({
     model: writingModel,
+    max_output_tokens: 28_000,
     input: [
       {
         role: "system",
         content:
-          "너는 한국어 베스트셀러 실용서 편집자이자 전문 전자책 작가다. 결과물은 AI가 쓴 티가 나지 않아야 한다. 추상적인 조언을 피하고, 독자의 상황을 이해하는 문장, 구체적인 예시, 실제 적용 순서, 적당한 단호함과 따뜻함이 있는 원고를 쓴다. 과장된 수익 보장, 허위 후기, 근거 없는 숫자는 쓰지 않는다. 마케팅 문구만 나열하지 말고 실제 판매 가능한 완성형 전자책 원고를 만든다.",
+          "너는 한국어 베스트셀러 실용서 편집자이자 전문 전자책 작가다. 결과물은 사용 설명서가 아니라 돈을 받고 판매할 수 있는 완성형 전자책 원고여야 한다. 각 장은 문제 제기, 배경 설명, 실제 사례, 실행 순서, 검수 기준, 다음 행동까지 이어지는 긴 호흡의 원고로 쓴다. 추상적인 조언을 피하고, 독자의 상황을 이해하는 문장, 구체적인 예시, 실제 적용 순서, 적당한 단호함과 따뜻함이 있는 원고를 쓴다. 과장된 수익 보장, 허위 후기, 근거 없는 숫자는 쓰지 않는다. 마케팅 문구만 나열하지 말고 독자가 읽으면서 배우고, 읽은 뒤 바로 실행할 수 있는 실전형 전자책을 만든다.",
       },
       {
         role: "user",
@@ -255,25 +256,26 @@ async function handleGenerateEbook(request, response) {
 - authorName은 실제 개인 저자처럼 보이되 유명인 이름은 쓰지 않기
 - coverImagePrompt는 표지에 넣을 고급 편집 이미지 프롬프트로 작성. 이미지 안에 글자는 넣지 말라고 명시
 - editorNote는 이 책을 왜 만들었는지 짧은 편집자 노트처럼 작성
-- introduction은 저자가 독자에게 말하듯 6~8문장으로 작성
-- quickStartRoadmap은 완전 초보자가 10일 안에 첫 결과물을 만들도록 Day 0부터 Day 10까지에 가까운 실행 로드맵으로 작성
+- introduction은 저자가 독자에게 말하듯 10~14문장으로 작성. 왜 이 주제가 돈이 되는지, 독자가 어디서 막히는지, 이 책을 어떻게 읽고 실행해야 하는지까지 설명
+- quickStartRoadmap은 완전 초보자가 10~14일 안에 첫 결과물을 만들도록 Day 0부터 Day 14에 가까운 실행 로드맵으로 작성. 각 날짜의 tasks는 클릭할 메뉴, 만들 파일, 써야 할 문장, 점검할 지표처럼 작게 쪼개기
 - toolStack은 실제로 어떤 도구를 쓰는지 작성. 예: ChatGPT/OpenAI, CapCut, Canva, YouTube Studio, TikTok, Instagram, Notion/Google Sheets 등. 주제에 맞지 않으면 더 적절한 도구로 바꾸기
 - monetizationModel은 플랫폼별 수익 구조, 조회수/전환/판매 같은 확인 지표, 현실적 소요 기간을 구체적으로 작성. 수익 보장은 하지 않기
-- revenueCaseStudies는 독자가 참고할 수 있는 현실 기반 수익 사례 5~6개를 작성. 검증되지 않은 특정 실명이나 회사명을 쓰지 말고, 익명화된 사례처럼 작성. 숫자는 매출 보장이 아니라 예시 범위로 쓰고, 어떤 상품을 어떤 채널에서 어떤 순서로 팔았는지 구체적으로 설명
+- revenueCaseStudies는 독자가 참고할 수 있는 현실 기반 수익 사례 6~8개를 작성. 검증되지 않은 특정 실명이나 회사명을 쓰지 말고, 익명화된 사례처럼 작성. 숫자는 매출 보장이 아니라 예시 범위로 쓰고, 준비물, 판매 전 준비, 유입 채널, 가격 테스트, 실패 후 수정, 배운 점을 포함
 - chapter.title에는 '1장', 'Chapter', 숫자 번호를 넣지 말고 순수 제목만 작성
-- chapter.opening은 해당 장을 여는 강한 문제 제기 2~3문장
-- chapter는 5~6개로 구성하되, 각 장이 하나의 실행 단계가 되게 작성
-- chapter.body는 실제 본문 단락 4~5개. 각 단락은 2~4문장으로 충분히 길게 작성
-- chapter.caseStudy는 가상의 독자 사례 4~6문장. 이름은 평범한 한국 이름 또는 직함만 사용
-- chapter.requiredTools는 이 장을 실행하는 데 필요한 도구명, 쓰는 이유, 처음 세팅 방법을 아주 구체적으로 작성
-- chapter.stepByStep은 독자가 화면을 보며 따라 할 수 있을 정도로 순서형으로 작성. '계정 만들기', '메뉴 위치', '파일명', '업로드 전 점검'처럼 작은 단계까지 나누기
-- chapter.platformActions는 실제 플랫폼에서 해야 할 행동을 작성. 예: 유튜브 채널 만들기, Shorts 업로드, 제목/설명/해시태그 작성, 수익화 탭 확인 등
-- chapter.qualityChecklist는 결과물이 팔리거나 조회될 최소 품질 기준을 작성
-- chapter.commonMistakes는 초보자가 흔히 망치는 지점과 피하는 법을 작성
-- chapter.actionItems는 바로 실행할 체크리스트
-- reflectionQuestions는 독자가 직접 써볼 질문
+- chapter.opening은 해당 장을 여는 강한 문제 제기 3~5문장
+- chapter는 6~8개로 구성하되, 각 장이 하나의 실행 단계가 되게 작성
+- chapter.body는 실제 전자책 본문 단락 8~10개. 각 단락은 3~5문장으로 충분히 길게 작성하고, 정의만 하지 말고 왜 필요한지, 초보자가 어디서 막히는지, 구체적으로 어떻게 해결하는지까지 설명
+- chapter.caseStudy는 가상의 독자 사례 6~8문장. 시작 상황, 실행 과정, 막힌 지점, 수정한 방법, 얻은 결과를 포함
+- chapter.requiredTools는 이 장을 실행하는 데 필요한 도구명, 쓰는 이유, 계정/파일/폴더/설정 방법을 아주 구체적으로 작성
+- chapter.stepByStep은 독자가 화면을 보며 따라 할 수 있을 정도로 10~14단계로 작성. '계정 만들기', '메뉴 위치', '파일명', '업로드 전 점검'처럼 작은 단계까지 나누기
+- chapter.platformActions는 실제 플랫폼에서 해야 할 행동을 6~10개 작성. 계정 세팅, 업로드, 제목/설명/태그, 링크 배치, 결제/문의 동선, 지표 확인을 주제에 맞게 포함
+- chapter.qualityChecklist는 결과물이 팔리거나 조회될 최소 품질 기준을 6~10개 작성
+- chapter.commonMistakes는 초보자가 흔히 망치는 지점과 피하는 법을 5~8개 작성
+- chapter.actionItems는 바로 실행할 체크리스트 6~9개를 작성
+- reflectionQuestions는 독자가 직접 써볼 질문 3~5개를 작성
 - salesPage는 판매 상세페이지에 넣어도 되는 자연스러운 문구
 - 모든 내용은 자연스러운 한국어로 작성
+- 각 장은 짧은 답변 묶음이 아니라 '본문 원고'처럼 자연스럽게 이어져야 한다. 리스트는 실행 파트에서만 쓰고, body는 설명형 문단으로 작성
 - 독자가 0.1부터 100까지 따라 할 수 있어야 한다. '잘 운영한다', '꾸준히 한다'처럼 추상적으로 끝내지 말고 무엇을 어디에서 어떻게 하는지 써라. 단, 장황한 설명보다 실행 순서와 체크리스트를 촘촘하게 써라
 - 주제가 쇼츠/릴스/영상 부업이면 플랫폼 가입, 채널 세팅, AI 스크립트 작성, 편집 학습, CapCut 편집 순서, 업로드 위치, 수익 구조, 지표 확인, 운영 루틴을 반드시 포함
 - JSON 구조만 반환`,
@@ -288,7 +290,9 @@ async function handleGenerateEbook(request, response) {
 - 로드맵은 ${profile.roadmapDays}개 단계 안팎으로 작성한다.
 - 도구 세팅은 ${profile.toolCount}개 안팎으로 작성한다.
 - pageCount는 실제 생성량에 맞춘 예상 PDF 페이지 수로 작성하고 과장하지 않는다.
-- 페이지 수보다 중요한 것은 독자가 그대로 따라 할 수 있는 구체적인 실행 순서다.`,
+- 페이지 수보다 중요한 것은 독자가 그대로 따라 할 수 있는 구체적인 실행 순서다.
+- 전체 결과물은 '개요 + 실행 로드맵 + 본문 원고 + 판매 패키지'가 모두 갖춰진 전자책이어야 한다.
+- 사용자가 주제를 바꿔도 일반론을 반복하지 말고, 반드시 해당 주제의 플랫폼, 도구, 파일, 문구, 검수 기준을 맞춤형으로 바꾼다.`,
       },
     ],
     text: {
@@ -496,7 +500,7 @@ function renderStandaloneHtml(ebook, template) {
     <section class="editor-note"><p class="label">편집자 노트</p>${paragraphs(ebook.editorNote)}</section>
     <section><h2>들어가며</h2>${paragraphs(ebook.introduction)}</section>
     <section>
-      <h2>10일 실행 로드맵</h2>
+      <h2>실행 로드맵</h2>
       <table class="table">
         <thead><tr><th>일정</th><th>목표</th><th>오늘 할 일</th><th>결과물</th></tr></thead>
         <tbody>${ensureList(ebook.quickStartRoadmap, []).map((item) => `<tr><td>${escapeHtml(item.day || "")}</td><td>${escapeHtml(item.goal || "")}</td><td><ul>${ensureList(item.tasks, []).map((task) => `<li>${escapeHtml(task)}</li>`).join("")}</ul></td><td>${escapeHtml(item.output || "")}</td></tr>`).join("")}</tbody>
@@ -626,7 +630,7 @@ ${ebook.editorNote}
 
 ${ebook.introduction}
 
-## 10일 실행 로드맵
+## 실행 로드맵
 
 ${ensureList(ebook.quickStartRoadmap, []).map((item) => `### ${item.day} - ${item.goal}\n\n${ensureList(item.tasks, []).map((task) => `- ${task}`).join("\n")}\n\n결과물: ${item.output}`).join("\n\n")}
 
@@ -742,11 +746,11 @@ function normalizeFormat(format) {
 
 function premiumGenerationProfile() {
   return {
-    pageRange: "40~60페이지",
-    chapterCount: "6",
-    bodyParagraphs: "5~6",
-    roadmapDays: "9~10",
-    toolCount: "8~10",
+    pageRange: "80~120페이지",
+    chapterCount: "6~8",
+    bodyParagraphs: "8~10",
+    roadmapDays: "10~14",
+    toolCount: "8~12",
   };
 }
 

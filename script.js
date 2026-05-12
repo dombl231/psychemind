@@ -239,7 +239,7 @@ async function checkServer() {
     updateDownloadFormatLabels();
     if (data.hasOpenAIKey) {
       setConnection("online", "서버 연결 완료");
-      setStatus("프리미엄 생성 준비 완료. 시간이 조금 걸려도 더 완성도 높은 전자책을 만듭니다.");
+      setStatus("프리미엄 생성 준비 완료. 더 긴 본문과 세세한 실행 가이드를 포함한 전자책을 만듭니다.");
     } else {
       setConnection("warn", "서버 연결 완료");
       setStatus("서버는 켜져 있지만 OpenAI API 키가 필요합니다.");
@@ -252,7 +252,7 @@ async function checkServer() {
 
 async function generateEbook() {
   setBusy(true, "OpenAI 생성 요청을 보냈습니다.");
-  showLoading("프리미엄 전자책을 생성하는 중입니다", "풀패키지 기준으로 기획, 본문, 수익 사례, 판매 패키지를 작성하고 있습니다.");
+  showLoading("프리미엄 전자책을 생성하는 중입니다", "긴 본문 원고, 세부 실행 순서, 수익 사례, 판매 패키지를 함께 작성하고 있습니다.");
 
   try {
     const turnstileToken = await getTurnstileToken();
@@ -270,9 +270,9 @@ async function generateEbook() {
     currentEbook = normalizeEbook(data.ebook);
     renderPreview();
     loadingTitle.textContent = "표지 이미지를 생성하는 중입니다";
-    loadingMessage.textContent = "원고는 준비됐고, 이제 표지 이미지를 붙이고 있습니다.";
+    loadingMessage.textContent = "확장 원고는 준비됐고, 이제 표지 이미지를 붙이고 있습니다.";
     await generateCoverForCurrentEbook();
-    setStatus("프리미엄 전자책 생성 완료. 원하는 형식으로 다운로드할 수 있습니다.");
+    setStatus("확장형 프리미엄 전자책 생성 완료. 원하는 형식으로 다운로드할 수 있습니다.");
     finishLoading("생성 완료", "상세 원고와 표지 이미지가 준비되었습니다.");
     preview.animate(
       [
