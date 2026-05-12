@@ -209,6 +209,11 @@ export function sendFile(content, contentType, fileName) {
   });
 }
 
+export function sanitizeExportEbook(ebook) {
+  const { salesPage, bonuses, ...exportEbook } = ebook || {};
+  return exportEbook;
+}
+
 export async function callOpenAI(env, path, body) {
   if (!env.OPENAI_API_KEY) {
     throw new HttpError(503, "OPENAI_API_KEY가 설정되어 있지 않습니다.");
@@ -511,10 +516,7 @@ export function renderStandaloneHtml(ebook, template = "obsidian") {
     <section><h2>현실 기반 수익 사례</h2>${renderRevenueCaseStudies(ebook.revenueCaseStudies)}</section>
     <section><h2>목차</h2><ol>${ensureList(ebook.chapters, []).map((chapter) => `<li>${escapeHtml(cleanChapterTitle(chapter.title || ""))}</li>`).join("")}</ol></section>
     <section class="page-break"><h2>본문</h2>${ensureList(ebook.chapters, []).map(renderChapter).join("")}</section>
-    <section><h2>판매 페이지 문구</h2><div class="sales-box"><h3>${escapeHtml(ebook.salesPage?.headline || "")}</h3><p>${escapeHtml(ebook.salesPage?.subheadline || "")}</p><ul>${ensureList(ebook.salesPage?.bullets, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div></section>
-    <section><h2>보너스 구성</h2><ul>${ensureList(ebook.bonuses, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
     <section><h2>런칭 체크리스트</h2><ol>${ensureList(ebook.launchChecklist, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol></section>
-    <section><h2>FAQ</h2>${ensureList(ebook.salesPage?.faq, []).map((item) => `<div class="question-box"><h3>${escapeHtml(item.question || "")}</h3><p>${escapeHtml(item.answer || "")}</p></div>`).join("")}</section>
     <section><h2>마치며</h2>${paragraphs(ebook.closingNote)}</section>
   </main>
 </body>
@@ -572,25 +574,9 @@ ${ensureList(ebook.chapters, []).map((chapter, index) => `${index + 1}. ${cleanC
 
 ${ensureList(ebook.chapters, []).map((chapter, index) => `### ${index + 1}. ${cleanChapterTitle(chapter.title)}\n\n${chapter.opening}\n\n${ensureList(chapter.body, []).join("\n\n")}\n\n#### 현장 예시\n\n${chapter.caseStudy}\n\n#### 바로 실행하기\n\n${ensureList(chapter.actionItems, []).map((item) => `- ${item}`).join("\n")}`).join("\n\n")}
 
-## 판매 페이지 문구
-
-### ${ebook.salesPage?.headline || ""}
-
-${ebook.salesPage?.subheadline || ""}
-
-${ensureList(ebook.salesPage?.bullets, []).map((item) => `- ${item}`).join("\n")}
-
-## 보너스 구성
-
-${ensureList(ebook.bonuses, []).map((item) => `- ${item}`).join("\n")}
-
 ## 런칭 체크리스트
 
 ${ensureList(ebook.launchChecklist, []).map((item, index) => `${index + 1}. ${item}`).join("\n")}
-
-## FAQ
-
-${ensureList(ebook.salesPage?.faq, []).map((item) => `### ${item.question}\n\n${item.answer}`).join("\n\n")}
 
 ## 마치며
 

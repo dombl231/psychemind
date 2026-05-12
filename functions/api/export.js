@@ -1,4 +1,4 @@
-import { HttpError, json, normalizeFormat, readJson, renderMarkdown, renderStandaloneHtml, requireSameOrigin, sendFile, slugify } from "../_lib/ebook-api.js";
+import { HttpError, json, normalizeFormat, readJson, renderMarkdown, renderStandaloneHtml, requireSameOrigin, sanitizeExportEbook, sendFile, slugify } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request }) {
   try {
@@ -11,7 +11,7 @@ export async function onRequestPost({ request }) {
 }
 
 export function exportEbook(body, forcedFormat = null) {
-  const ebook = body.ebook;
+  const ebook = sanitizeExportEbook(body.ebook);
   const template = ["obsidian", "ivory", "graphite"].includes(body.template) ? body.template : "obsidian";
   const format = forcedFormat || normalizeFormat(body.format);
 

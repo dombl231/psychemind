@@ -439,7 +439,7 @@ Style: premium Korean business ebook cover image, editorial photography, cinemat
 
 async function handleExport(request, response, forcedFormat) {
   const body = await readJson(request);
-  const ebook = body.ebook;
+  const ebook = sanitizeExportEbook(body.ebook);
   const template = ["obsidian", "ivory", "graphite"].includes(body.template) ? body.template : "obsidian";
   const format = forcedFormat || normalizeFormat(body.format);
 
@@ -616,20 +616,7 @@ function renderStandaloneHtml(ebook, template) {
       <h2>본문</h2>
       ${(ebook.chapters || []).map((chapter, index) => renderChapter(chapter, index)).join("")}
     </section>
-    <section>
-      <h2>판매 페이지 문구</h2>
-      <div class="sales-box">
-        <h3>${escapeHtml(ebook.salesPage?.headline || "")}</h3>
-        <p>${escapeHtml(ebook.salesPage?.subheadline || "")}</p>
-        <ul>${ensureList(ebook.salesPage?.bullets, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      </div>
-    </section>
-    <section><h2>보너스 구성</h2><ul>${ensureList(ebook.bonuses, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
     <section><h2>런칭 체크리스트</h2><ol>${ensureList(ebook.launchChecklist, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol></section>
-    <section>
-      <h2>FAQ</h2>
-      ${ensureList(ebook.salesPage?.faq, []).map((item) => `<div class="question-box"><h3>${escapeHtml(item.question || "")}</h3><p>${escapeHtml(item.answer || "")}</p></div>`).join("")}
-    </section>
     <section><h2>마치며</h2>${paragraphs(ebook.closingNote)}</section>
   </main>
 </body>
@@ -742,25 +729,9 @@ ${ensureList(ebook.chapters, []).map((chapter, index) => `${index + 1}. ${cleanC
 
 ${ensureList(ebook.chapters, []).map(renderMarkdownChapter).join("\n\n")}
 
-## 판매 페이지 문구
-
-### ${ebook.salesPage?.headline || ""}
-
-${ebook.salesPage?.subheadline || ""}
-
-${ensureList(ebook.salesPage?.bullets, []).map((item) => `- ${item}`).join("\n")}
-
-## 보너스 구성
-
-${ensureList(ebook.bonuses, []).map((item) => `- ${item}`).join("\n")}
-
 ## 런칭 체크리스트
 
 ${ensureList(ebook.launchChecklist, []).map((item, index) => `${index + 1}. ${item}`).join("\n")}
-
-## FAQ
-
-${ensureList(ebook.salesPage?.faq, []).map((item) => `### ${item.question}\n\n${item.answer}`).join("\n\n")}
 
 ## 마치며
 
@@ -894,6 +865,11 @@ function sendFile(response, buffer, contentType, fileName) {
     "Cache-Control": "no-store",
   });
   response.end(buffer);
+}
+
+function sanitizeExportEbook(ebook) {
+  const { salesPage, bonuses, ...exportEbook } = ebook || {};
+  return exportEbook;
 }
 
 function cleanText(value, fallback) {

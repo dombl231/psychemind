@@ -701,6 +701,67 @@ select option {
   text-align: center;
 }
 
+.sales-copy-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.completion-banner,
+.sales-copy-block,
+.html-pdf-guide {
+  border: 1px solid rgba(240, 201, 120, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 18px;
+}
+
+.completion-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.completion-banner span,
+.panel-kicker {
+  color: var(--gold);
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.completion-banner strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.sales-copy-block h3 {
+  margin: 8px 0 10px;
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+.sales-copy-block p,
+.html-pdf-guide li {
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.sales-copy-block ul,
+.html-pdf-guide ol {
+  margin: 12px 0 0;
+  padding-left: 22px;
+}
+
+.sales-copy-block li {
+  margin-bottom: 8px;
+  color: var(--text);
+  line-height: 1.65;
+}
+
 .ebook-preview.ivory {
   background: linear-gradient(135deg, #fffaf0, #e9dec9);
   color: #17130e;

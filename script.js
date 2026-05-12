@@ -3,6 +3,7 @@ const topicInput = document.querySelector("#topicInput");
 const audienceInput = document.querySelector("#audienceInput");
 const toneInput = document.querySelector("#toneInput");
 const preview = document.querySelector("#ebookPreview");
+const salesCopyPanel = document.querySelector("#salesCopyPanel");
 const coverTitle = document.querySelector("#coverTitle");
 const templateLabel = document.querySelector("#templateLabel");
 const downloadButton = document.querySelector("#downloadButton");
@@ -23,6 +24,7 @@ const appConfig = window.MONOGRAPH_CONFIG || {};
 
 let currentTemplate = "obsidian";
 let currentEbook = null;
+let hasGeneratedEbook = false;
 let progressTimer = null;
 let serverRuntime = "node";
 let turnstileWidgetId = null;
@@ -62,7 +64,7 @@ const sampleEbook = {
       product: "회의 전 준비표, 회의록 프롬프트, 후속 업무 체크리스트를 묶은 39,000원 상품",
       channels: ["브런치", "네이버 블로그", "오픈채팅"],
       revenuePath: "무료 글로 문제를 설명하고, 글 하단에서 전자책 상세페이지로 연결했습니다.",
-      numbers: "초기 4주 동안 소량 판매와 피드백 수집을 목표로 운영했고, 후기 반영 후 템플릿 보너스를 추가했습니다.",
+      numbers: "초기 4주 동안 소량 판매와 피드백 수집을 목표로 운영했고, 후기 반영 후 안내 템플릿을 보강했습니다.",
       lesson: "큰 노하우보다 바로 복사해 쓰는 양식이 구매 이유가 되었습니다.",
     },
     {
@@ -135,10 +137,10 @@ const sampleEbook = {
     },
     {
       title: "첫 고객을 설득하는 상세페이지",
-      opening: "문제, 결과, 목차, 보너스, FAQ를 한 흐름으로 배치합니다.",
+      opening: "문제, 결과, 목차, 구매 안내를 한 흐름으로 배치합니다.",
       body: ["상세페이지는 멋진 문장보다 독자의 불안을 줄이는 구조가 중요합니다. 독자가 현재 겪는 문제를 먼저 보여주고, 이 전자책을 읽은 뒤 얻을 결과를 구체적으로 제시해야 합니다."],
-      caseStudy: "초기 판매 페이지가 잘 팔리지 않던 지은은 제목을 바꾸기보다 독자가 실제로 얻는 결과를 먼저 보여주었습니다. 목차와 FAQ가 구체적으로 바뀌자 문의보다 구매가 늘었습니다.",
-      actionItems: ["독자의 문제 문장 5개 쓰기", "읽은 뒤 결과를 한 문장으로 정리하기", "FAQ 3개 작성하기"],
+      caseStudy: "초기 판매 페이지가 잘 팔리지 않던 지은은 제목을 바꾸기보다 독자가 실제로 얻는 결과를 먼저 보여주었습니다. 목차와 구매 전 안내가 구체적으로 바뀌자 문의보다 구매가 늘었습니다.",
+      actionItems: ["독자의 문제 문장 5개 쓰기", "읽은 뒤 결과를 한 문장으로 정리하기", "구매 전 안내 문장 3개 작성하기"],
       reflectionQuestions: ["구매자가 결제 전 가장 불안해할 지점은 무엇인가요?", "그 불안을 줄일 증거는 무엇인가요?"],
     },
     {
@@ -153,13 +155,13 @@ const sampleEbook = {
   introduction: "이 전자책은 AI 자동화를 막연한 기술이 아니라 실제 판매 가능한 부업 상품으로 바꾸는 방법을 다룹니다.",
   salesPage: {
     headline: "퇴근 후 2시간, 반복 업무를 디지털 상품으로 바꾸세요.",
-    bullets: ["초보자도 따라 하는 자동화 상품 설계", "판매 페이지 문구와 전환 구조 포함", "런칭 체크리스트와 보너스 구성 제공"],
+    bullets: ["초보자도 따라 하는 자동화 상품 설계", "판매 페이지 문구와 전환 구조 포함", "런칭 체크리스트와 실행 순서 제공"],
     faq: [
       { question: "개발을 몰라도 가능한가요?", answer: "노코드 도구와 프롬프트 기반으로 시작할 수 있게 구성합니다." },
       { question: "처음에는 무엇을 확인해야 하나요?", answer: "가격보다 먼저 독자가 실제로 원하는 결과와 구매 전 망설이는 이유를 확인하는 것이 좋습니다." },
     ],
   },
-  bonuses: ["판매 페이지 템플릿", "AI 자동화 체크리스트", "첫 런칭 안내문"],
+  bonuses: [],
   launchChecklist: ["문제 문장 검증", "목차 공개", "사전 신청 링크 배포", "후기 수집"],
   closingNote: "작게 시작해도 괜찮습니다. 중요한 것은 반복 가능한 문제를 발견하고, 독자가 바로 따라 할 수 있는 형태로 정리하는 것입니다.",
 };
@@ -267,7 +269,9 @@ async function generateEbook() {
     }
 
     currentEbook = normalizeEbook(data.ebook);
+    hasGeneratedEbook = true;
     renderPreview();
+    renderSalesCopyPanel();
     loadingTitle.textContent = "MONOGRAPH AI가 표지 이미지를 생성 중입니다";
     loadingMessage.textContent = "확장 원고는 준비됐고, 이제 표지 이미지를 붙이고 있습니다.";
     await generateCoverForCurrentEbook();
@@ -300,6 +304,7 @@ async function generateCoverForCurrentEbook() {
     if (response.ok && data.coverImage) {
       currentEbook.coverImage = data.coverImage;
       renderPreview();
+      renderSalesCopyPanel();
     }
   } catch {
     setStatus("원고 생성은 완료됐지만 표지 이미지는 건너뛰었습니다. 다운로드는 가능합니다.");
@@ -372,6 +377,43 @@ function renderPreview() {
     </div>
     <p class="preview-image-caption">전자책 이미지 미리보기</p>
   `;
+  renderSalesCopyPanel();
+}
+
+function renderSalesCopyPanel() {
+  if (!salesCopyPanel) return;
+
+  if (!currentEbook || !hasGeneratedEbook) {
+    salesCopyPanel.hidden = true;
+    salesCopyPanel.innerHTML = "";
+    return;
+  }
+
+  const salesPage = currentEbook.salesPage || {};
+  salesCopyPanel.hidden = false;
+  salesCopyPanel.innerHTML = `
+    <div class="completion-banner">
+      <span>생성 완료</span>
+      <strong>생성물 완료됐습니다</strong>
+    </div>
+    <div class="sales-copy-block">
+      <p class="panel-kicker">판매 페이지 문구</p>
+      <h3>${escapeHtml(salesPage.headline || currentEbook.title)}</h3>
+      <p>${escapeHtml(salesPage.subheadline || currentEbook.subtitle)}</p>
+      <ul>
+        ${ensureArray(salesPage.bullets, []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </div>
+    <div class="html-pdf-guide">
+      <p class="panel-kicker">HTML을 PDF로 저장하는 법</p>
+      <ol>
+        <li>다운로드 형식에서 <strong>PDF 인쇄용 HTML</strong> 또는 <strong>HTML</strong>을 선택합니다.</li>
+        <li>다운로드한 HTML 파일을 Chrome 또는 Edge에서 엽니다.</li>
+        <li><strong>Ctrl + P</strong>를 누른 뒤 대상에서 <strong>PDF로 저장</strong>을 선택합니다.</li>
+        <li>배경 그래픽 옵션을 켜고 저장하면 표지와 본문 스타일이 함께 보존됩니다.</li>
+      </ol>
+    </div>
+  `;
 }
 
 function setTemplate(template) {
@@ -399,7 +441,7 @@ function showLoading(title, message, useSteps = true) {
       step.classList.toggle("is-active", index <= activeIndex);
     });
     if (useSteps) {
-      const messages = ["목차를 설계하고 있습니다.", "챕터 요약을 작성하고 있습니다.", "판매 문구와 보너스를 구성하고 있습니다.", "미리보기를 정리하고 있습니다."];
+      const messages = ["목차를 설계하고 있습니다.", "챕터 요약을 작성하고 있습니다.", "판매 자료와 내보내기를 구성하고 있습니다.", "미리보기를 정리하고 있습니다."];
       loadingMessage.textContent = messages[Math.min(activeIndex, messages.length - 1)];
     }
   }, 900);
