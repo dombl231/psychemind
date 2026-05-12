@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Monograph AI</title>
+    <link>https://monographai.co.kr/</link>
+    <description>AI ebook profit studio</description>
+    <language>ko</language>
+    <lastBuildDate>Tue, 12 May 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>Monograph AI</title>
+      <link>https://monographai.co.kr/</link>
+      <guid>https://monographai.co.kr/</guid>
+      <pubDate>Tue, 12 May 2026 00:00:00 +0900</pubDate>
+      <description>MONOGRAPH AI helps create ebook drafts, outlines, covers, and sales packages.</description>
+    </item>
+  </channel>
+</rss>

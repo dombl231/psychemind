@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const publicDir = path.join(root, "public");
-const staticFiles = ["index.html", "styles.css", "script.js", "sitemap.xml", "robots.txt"];
+const staticFiles = ["index.html", "styles.css", "script.js", "sitemap.xml", "rss.xml", "rss", "robots.txt"];
 const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY || "";
 
 await fs.rm(publicDir, { recursive: true, force: true });
@@ -31,6 +31,15 @@ await fs.writeFile(
 
 /api/*
   Cache-Control: no-store
+
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+
+/rss
+  Content-Type: application/rss+xml; charset=utf-8
+
+/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
 `,
   "utf8",
 );
