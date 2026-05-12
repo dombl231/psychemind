@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const publicDir = path.join(root, "public");
-const staticFiles = ["index.html", "styles.css", "script.js"];
+const staticFiles = ["index.html", "styles.css", "script.js", "sitemap.xml", "robots.txt"];
 const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY || "";
 
 await fs.rm(publicDir, { recursive: true, force: true });
