@@ -40,14 +40,13 @@ const sampleEbook = {
   authorName: "한서준",
   audience: "퇴근 후 부수입을 만들고 싶은 초보자",
   pageCount: 60,
-  price: "29,000원",
   coverImagePrompt: "프리미엄 업무용 책상 위에 노트북, 노트, 은은한 금색 조명이 있는 고급 편집 사진. 이미지 안에 글자 없음.",
   editorNote: "이 책은 퇴근 후 짧은 시간을 현실적인 부업 구조로 바꾸고 싶은 독자를 위해 기획되었습니다.",
   quickStartRoadmap: [
     { day: "Day 0", goal: "작업 계정 준비", tasks: ["전용 이메일 만들기", "작업 폴더 만들기", "수익 기록 시트 만들기"], output: "부업 운영 기본 세팅" },
   ],
   toolStack: [
-    { category: "원고", tool: "ChatGPT", why: "스크립트와 아이디어를 빠르게 만든다.", howToStart: "계정을 만들고 주제별 프롬프트를 저장한다.", freeAlternative: "무료 AI 챗봇" },
+    { category: "원고", tool: "MONOGRAPH AI", why: "스크립트와 아이디어를 빠르게 만든다.", howToStart: "주제와 독자를 입력하고 생성 결과를 검토한다.", freeAlternative: "무료 AI 글쓰기 도구" },
   ],
   monetizationModel: {
     primaryRevenue: "전자책 판매와 템플릿 판매를 주 수익으로 둔다.",
@@ -154,10 +153,10 @@ const sampleEbook = {
   introduction: "이 전자책은 AI 자동화를 막연한 기술이 아니라 실제 판매 가능한 부업 상품으로 바꾸는 방법을 다룹니다.",
   salesPage: {
     headline: "퇴근 후 2시간, 반복 업무를 디지털 상품으로 바꾸세요.",
-    bullets: ["초보자도 따라 하는 자동화 상품 설계", "판매 페이지 문구와 가격 전략 포함", "런칭 체크리스트와 보너스 구성 제공"],
+    bullets: ["초보자도 따라 하는 자동화 상품 설계", "판매 페이지 문구와 전환 구조 포함", "런칭 체크리스트와 보너스 구성 제공"],
     faq: [
       { question: "개발을 몰라도 가능한가요?", answer: "노코드 도구와 프롬프트 기반으로 시작할 수 있게 구성합니다." },
-      { question: "얼마에 팔면 좋나요?", answer: "입문 상품은 19,000원에서 49,000원 사이로 테스트하는 전략을 권장합니다." },
+      { question: "처음에는 무엇을 확인해야 하나요?", answer: "가격보다 먼저 독자가 실제로 원하는 결과와 구매 전 망설이는 이유를 확인하는 것이 좋습니다." },
     ],
   },
   bonuses: ["판매 페이지 템플릿", "AI 자동화 체크리스트", "첫 런칭 안내문"],
@@ -242,7 +241,7 @@ async function checkServer() {
       setStatus("프리미엄 생성 준비 완료. 더 긴 본문과 세세한 실행 가이드를 포함한 전자책을 만듭니다.");
     } else {
       setConnection("warn", "서버 연결 완료");
-      setStatus("서버는 켜져 있지만 OpenAI API 키가 필요합니다.");
+      setStatus("서버는 켜져 있지만 생성 API 키가 필요합니다.");
     }
   } catch {
     setConnection("offline", "서버 연결 실패 · node server.mjs 확인");
@@ -251,8 +250,8 @@ async function checkServer() {
 }
 
 async function generateEbook() {
-  setBusy(true, "OpenAI 생성 요청을 보냈습니다.");
-  showLoading("프리미엄 전자책을 생성하는 중입니다", "긴 본문 원고, 세부 실행 순서, 수익 사례, 판매 패키지를 함께 작성하고 있습니다.");
+  setBusy(true, "MONOGRAPH AI 생성 요청을 보냈습니다.");
+  showLoading("MONOGRAPH AI가 전자책을 생성 중입니다", "긴 본문 원고, 세부 실행 순서, 수익 사례, 판매 패키지를 함께 작성하고 있습니다.");
 
   try {
     const turnstileToken = await getTurnstileToken();
@@ -269,7 +268,7 @@ async function generateEbook() {
 
     currentEbook = normalizeEbook(data.ebook);
     renderPreview();
-    loadingTitle.textContent = "표지 이미지를 생성하는 중입니다";
+    loadingTitle.textContent = "MONOGRAPH AI가 표지 이미지를 생성 중입니다";
     loadingMessage.textContent = "확장 원고는 준비됐고, 이제 표지 이미지를 붙이고 있습니다.";
     await generateCoverForCurrentEbook();
     setStatus("확장형 프리미엄 전자책 생성 완료. 원하는 형식으로 다운로드할 수 있습니다.");
@@ -349,53 +348,30 @@ async function downloadCurrentEbook() {
 }
 
 function renderPreview() {
-  if (!currentEbook) return;
-
   preview.className = `ebook-preview ${currentTemplate}`;
   templateLabel.textContent = templateNames[currentTemplate];
-  coverTitle.textContent = currentEbook.title;
+  if (currentEbook) {
+    coverTitle.textContent = currentEbook.title;
+  }
+
+  const coverImage = currentEbook?.coverImage?.data
+    ? `<img class="preview-cover-image" src="data:${currentEbook.coverImage.mimeType || "image/png"};base64,${currentEbook.coverImage.data}" alt="생성된 전자책 표지 이미지" />`
+    : `<div class="preview-book-art" aria-hidden="true">
+        <div class="preview-book-cover">
+          <span>MONOGRAPH</span>
+          <strong>EBOOK</strong>
+          <small>premium digital package</small>
+        </div>
+        <div class="preview-book-page page-a"></div>
+        <div class="preview-book-page page-b"></div>
+      </div>`;
 
   preview.innerHTML = `
-    <p class="preview-kicker">PROFIT EBOOK</p>
-    <h3>${escapeHtml(currentEbook.title)}</h3>
-    <p class="preview-subtitle">${escapeHtml(currentEbook.subtitle)}</p>
-    <ol>
-      ${currentEbook.chapters
-        .slice(0, 5)
-        .map((chapter) => `<li><strong>${escapeHtml(chapter.title)}</strong><span>${escapeHtml(chapter.opening)}</span></li>`)
-        .join("")}
-    </ol>
-    <div class="sales-box">
-      <strong>권장 판매가 ${escapeHtml(currentEbook.price)}</strong>
-      <span>예상 구성: 본문 ${escapeHtml(currentEbook.pageCount)}p + 현장 예시 + 보너스 ${currentEbook.bonuses.length}종</span>
+    <div class="preview-image-stage">
+      ${coverImage}
     </div>
-    <div class="revenue-preview">
-      <div class="revenue-preview-head">
-        <span>REALISTIC REVENUE CASES</span>
-        <strong>현실 기반 수익 사례 ${currentEbook.revenueCaseStudies.length}개</strong>
-      </div>
-      <div class="revenue-case-grid">
-        ${currentEbook.revenueCaseStudies
-          .slice(0, 6)
-          .map(
-            (item, index) => `<article class="revenue-case-card">
-              <div class="case-number">${String(index + 1).padStart(2, "0")}</div>
-              <h4>${escapeHtml(item.title)}</h4>
-              <p>${escapeHtml(item.product)}</p>
-              <div class="case-tags">${ensureArray(item.channels, []).slice(0, 3).map((channel) => `<span>${escapeHtml(channel)}</span>`).join("")}</div>
-              <small>${escapeHtml(item.revenuePath)}</small>
-            </article>`,
-          )
-          .join("")}
-      </div>
-    </div>
+    <p class="preview-image-caption">전자책 이미지 미리보기</p>
   `;
-  if (currentEbook.coverImage?.data) {
-    preview.insertAdjacentHTML(
-      "afterbegin",
-      `<img class="preview-cover-image" src="data:${currentEbook.coverImage.mimeType || "image/png"};base64,${currentEbook.coverImage.data}" alt="생성된 전자책 표지 이미지" />`,
-    );
-  }
 }
 
 function setTemplate(template) {
@@ -468,7 +444,6 @@ function normalizeEbook(ebook) {
     subtitle: cleanValue(ebook?.subtitle, fallback.subtitle),
     audience: cleanValue(ebook?.audience, fallback.audience),
     pageCount: Number(ebook?.pageCount) || fallback.pageCount,
-    price: cleanValue(ebook?.price, fallback.price),
     introduction: cleanValue(ebook?.introduction, fallback.introduction),
     quickStartRoadmap: ensureArray(ebook?.quickStartRoadmap, fallback.quickStartRoadmap),
     toolStack: ensureArray(ebook?.toolStack, fallback.toolStack),

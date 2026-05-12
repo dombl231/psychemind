@@ -1,9 +1,3 @@
-const businessInfo = {
-  name: "MONOGRAPH AI",
-  registrationNumber: "202-44-67028",
-  partnershipEmail: "ohmunxx01@gmail.com",
-};
-
 export const ebookSchema = {
   type: "object",
   additionalProperties: false,
@@ -13,7 +7,6 @@ export const ebookSchema = {
     "authorName",
     "audience",
     "pageCount",
-    "price",
     "coverImagePrompt",
     "editorNote",
     "introduction",
@@ -33,7 +26,6 @@ export const ebookSchema = {
     authorName: { type: "string" },
     audience: { type: "string" },
     pageCount: { type: "integer" },
-    price: { type: "string" },
     coverImagePrompt: { type: "string" },
     editorNote: { type: "string" },
     introduction: { type: "string" },
@@ -218,7 +210,7 @@ export async function callOpenAI(env, path, body) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new HttpError(response.status, data.error?.message || "OpenAI 요청에 실패했습니다.");
+    throw new HttpError(response.status, data.error?.message || "생성 요청에 실패했습니다.");
   }
   return data;
 }
@@ -343,11 +335,12 @@ export function buildEbookPrompt({ topic, audience, tone }) {
 품질 기준:
 - 제목과 부제는 상업적이지만 싸구려 광고처럼 보이지 않게 작성
 - authorName은 실제 개인 저자처럼 보이되 유명인 이름은 쓰지 않기
+- 별도 권장 판매가, 가격 메타데이터, 사업자 정보, 연락처 정보는 만들지 않기
 - coverImagePrompt는 표지에 넣을 고급 편집 이미지 프롬프트로 작성. 이미지 안에 글자는 넣지 말라고 명시
 - editorNote는 이 책을 왜 만들었는지 짧은 편집자 노트처럼 작성
 - introduction은 저자가 독자에게 말하듯 10~14문장으로 작성. 왜 이 주제가 돈이 되는지, 독자가 어디서 막히는지, 이 책을 어떻게 읽고 실행해야 하는지까지 설명
 - quickStartRoadmap은 완전 초보자가 10~14일 안에 첫 결과물을 만들도록 Day 0부터 Day 14에 가까운 실행 로드맵으로 작성. 각 날짜의 tasks는 클릭할 메뉴, 만들 파일, 써야 할 문장, 점검할 지표처럼 작게 쪼개기
-- toolStack은 실제로 어떤 도구를 쓰는지 작성. 주제에 맞는 도구로 바꾸기
+- toolStack은 실제로 어떤 도구를 쓰는지 작성. 예: MONOGRAPH AI, Canva, Notion, Google Sheets, YouTube Studio 등 주제에 맞는 도구로 바꾸기
 - monetizationModel은 플랫폼별 수익 구조, 조회수/전환/판매 같은 확인 지표, 현실적 소요 기간을 구체적으로 작성. 수익 보장은 하지 않기
 - revenueCaseStudies는 독자가 참고할 수 있는 현실 기반 수익 사례 6~8개를 작성. 검증되지 않은 특정 실명이나 회사명을 쓰지 말고, 익명화된 사례처럼 작성. 각 사례는 준비물, 판매 전 준비, 유입 채널, 가격 테스트, 실패 후 수정, 배운 점을 포함
 - chapter.title에는 '1장', 'Chapter', 숫자 번호를 넣지 말고 순수 제목만 작성
@@ -438,7 +431,7 @@ export function renderStandaloneHtml(ebook, template = "obsidian") {
     </div>
     <div class="cover-meta">
       <span>${escapeHtml(ebook.audience || "독자 맞춤형 전자책")}</span>
-      <span>${escapeHtml(String(ebook.pageCount || ""))}p · 권장 판매가 ${escapeHtml(ebook.price || "")}</span>
+      <span>${escapeHtml(String(ebook.pageCount || ""))}p</span>
     </div>
   </article>
   <main>
@@ -476,7 +469,6 @@ ${ebook.subtitle}
 - 저자: ${ebook.authorName}
 - 대상 독자: ${ebook.audience}
 - 예상 분량: ${ebook.pageCount}p
-- 권장 판매가: ${ebook.price}
 
 ## 편집자 노트
 
