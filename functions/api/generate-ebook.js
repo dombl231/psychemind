@@ -1,4 +1,4 @@
-import { buildEbookPrompt, callOpenAI, ebookSchema, enforceRateLimit, getOutputText, HttpError, json, normalizeGenerateInput, readJson, requireSameOrigin, verifyTurnstile } from "../_lib/ebook-api.js";
+import { buildChaptersPrompt, buildEbookPackagePrompt, callOpenAI, ebookChaptersSchema, ebookPackageSchema, enforceRateLimit, getOutputText, HttpError, json, normalizeGenerateInput, readJson, requireSameOrigin, verifyTurnstile } from "../_lib/ebook-api.js";
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -7,22 +7,35 @@ export async function onRequestPost({ request, env }) {
     const body = await readJson(request, 32_000);
     await verifyTurnstile(request, env, body.turnstileToken);
     const payload = normalizeGenerateInput(body);
-    const result = await callOpenAI(env, "responses", {
+    const packageResult = await callOpenAI(env, "responses", {
       model: env.OPENAI_MODEL || "gpt-5.4",
-      input: buildEbookPrompt(payload),
-      max_output_tokens: 28_000,
+      input: buildEbookPackagePrompt(payload),
+      max_output_tokens: 12_000,
       text: {
         format: {
           type: "json_schema",
-          name: "premium_ebook_product",
+          name: "premium_ebook_package",
           strict: true,
-          schema: ebookSchema,
+          schema: ebookPackageSchema,
         },
       },
     });
+    const ebook = JSON.parse(getOutputText(packageResult));
 
-    const output = getOutputText(result);
-    const ebook = JSON.parse(output);
+    const chaptersResult = await callOpenAI(env, "responses", {
+      model: env.OPENAI_MODEL || "gpt-5.4",
+      input: buildChaptersPrompt(payload, ebook),
+      max_output_tokens: 20_000,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "premium_ebook_chapters",
+          strict: true,
+          schema: ebookChaptersSchema,
+        },
+      },
+    });
+    ebook.chapters = JSON.parse(getOutputText(chaptersResult)).chapters;
     ebook.coverImage = null;
     return json({ ebook });
   } catch (error) {

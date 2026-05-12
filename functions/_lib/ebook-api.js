@@ -95,8 +95,8 @@ export const ebookSchema = {
     },
     chapters: {
       type: "array",
-      minItems: 5,
-      maxItems: 6,
+      minItems: 6,
+      maxItems: 8,
       items: {
         type: "object",
         additionalProperties: false,
@@ -157,6 +157,21 @@ export const ebookSchema = {
     bonuses: { type: "array", minItems: 4, maxItems: 6, items: { type: "string" } },
     launchChecklist: { type: "array", minItems: 7, maxItems: 10, items: { type: "string" } },
     closingNote: { type: "string" },
+  },
+};
+
+export const ebookPackageSchema = {
+  ...ebookSchema,
+  required: ebookSchema.required.filter((field) => field !== "chapters"),
+  properties: Object.fromEntries(Object.entries(ebookSchema.properties).filter(([field]) => field !== "chapters")),
+};
+
+export const ebookChaptersSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["chapters"],
+  properties: {
+    chapters: ebookSchema.properties.chapters,
   },
 };
 
@@ -371,6 +386,59 @@ export function buildEbookPrompt({ topic, audience, tone }) {
 - 페이지 수보다 중요한 것은 독자가 그대로 따라 할 수 있는 구체적인 실행 순서다.
 - 전체 결과물은 '개요 + 실행 로드맵 + 본문 원고 + 판매 패키지'가 모두 갖춰진 전자책이어야 한다.
 - 사용자가 주제를 바꿔도 일반론을 반복하지 말고, 반드시 해당 주제의 플랫폼, 도구, 파일, 문구, 검수 기준을 맞춤형으로 바꾼다.`,
+    },
+  ];
+}
+
+export function buildEbookPackagePrompt(payload) {
+  return [
+    ...buildEbookPrompt(payload),
+    {
+      role: "user",
+      content:
+        "1차 호출에서는 chapters 필드를 만들지 않는다. 대신 제목, 부제, 저자, 독자, 예상 분량, 표지 프롬프트, 편집자 노트, 들어가며, 로드맵, 도구 세팅, 수익 구조, 수익 사례, 판매 페이지, 보너스, 런칭 체크리스트, 마무리 노트를 완성한다. 이후 2차 호출에서 같은 품질 기준으로 긴 챕터 본문을 별도 생성한다.",
+    },
+  ];
+}
+
+export function buildChaptersPrompt({ topic, audience, tone }, ebook) {
+  return [
+    {
+      role: "system",
+      content:
+        "너는 한국어 베스트셀러 실용서 편집자이자 전문 전자책 작가다. 이미 완성된 전자책 패키지 기획을 바탕으로, 돈을 받고 판매할 수 있는 긴 호흡의 본문 챕터만 작성한다. 각 장은 문제 제기, 배경 설명, 실제 사례, 실행 순서, 검수 기준, 다음 행동까지 이어지는 완성형 원고여야 한다.",
+    },
+    {
+      role: "user",
+      content: `전자책 주제: ${cleanText(topic, "수익형 전자책 만들기")}
+타깃 독자: ${cleanText(audience, "새로운 디지털 상품을 만들고 싶은 사람")}
+톤: ${cleanText(tone, "프리미엄 실전형")}
+
+이미 생성된 전자책 패키지:
+- 제목: ${cleanText(ebook.title, "")}
+- 부제: ${cleanText(ebook.subtitle, "")}
+- 대상 독자: ${cleanText(ebook.audience, "")}
+- 들어가며 요약: ${cleanText(ebook.introduction, "").slice(0, 900)}
+- 수익 구조: ${cleanText(ebook.monetizationModel?.primaryRevenue, "")} / ${cleanText(ebook.monetizationModel?.secondaryRevenue, "")}
+- 주요 도구: ${ensureList(ebook.toolStack, []).map((item) => item.tool).filter(Boolean).slice(0, 10).join(", ")}
+- 로드맵 목표: ${ensureList(ebook.quickStartRoadmap, []).map((item) => item.goal).filter(Boolean).slice(0, 14).join(" / ")}
+
+챕터 작성 기준:
+- chapters 배열만 반환한다.
+- chapter.title에는 '1장', 'Chapter', 숫자 번호를 넣지 말고 순수 제목만 작성한다.
+- chapter.opening은 해당 장을 여는 강한 문제 제기 3~5문장으로 작성한다.
+- chapter는 6~8개로 구성하되, 각 장이 하나의 실행 단계가 되게 작성한다.
+- chapter.body는 실제 전자책 본문 단락 8~10개. 각 단락은 3~5문장으로 충분히 길게 작성하고, 정의만 하지 말고 왜 필요한지, 초보자가 어디서 막히는지, 구체적으로 어떻게 해결하는지까지 설명한다.
+- chapter.caseStudy는 가상의 독자 사례 6~8문장. 시작 상황, 실행 과정, 막힌 지점, 수정한 방법, 얻은 결과를 포함한다.
+- chapter.requiredTools는 이 장을 실행하는 데 필요한 도구명, 쓰는 이유, 계정/파일/폴더/설정 방법을 아주 구체적으로 작성한다.
+- chapter.stepByStep은 독자가 화면을 보며 따라 할 수 있을 정도로 10~14단계로 작성한다.
+- chapter.platformActions는 실제 플랫폼에서 해야 할 행동을 6~10개 작성한다.
+- chapter.qualityChecklist는 결과물이 팔리거나 조회될 최소 품질 기준을 6~10개 작성한다.
+- chapter.commonMistakes는 초보자가 흔히 망치는 지점과 피하는 법을 5~8개 작성한다.
+- chapter.actionItems는 바로 실행할 체크리스트 6~9개를 작성한다.
+- reflectionQuestions는 독자가 직접 써볼 질문 3~5개를 작성한다.
+- 별도 권장 판매가, 가격 메타데이터, 사업자 정보, 연락처 정보는 만들지 않는다.
+- 모든 내용은 자연스러운 한국어로 작성한다.`,
     },
   ];
 }
