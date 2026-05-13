@@ -395,6 +395,8 @@ body.light-mode .spec {
 
 .feature-strip p,
 .section-heading p,
+.seo-grid p,
+.faq-block p,
 .market span,
 .market-intro {
   color: var(--muted);
@@ -402,6 +404,7 @@ body.light-mode .spec {
 }
 
 .studio,
+.ebook-guide,
 .templates,
 .market {
   padding: 96px max(24px, calc((100vw - 1120px) / 2));
@@ -416,6 +419,64 @@ h2 {
   margin-bottom: 14px;
   font-size: clamp(30px, 4vw, 52px);
   line-height: 1.12;
+}
+
+.ebook-guide {
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--bg), var(--panel-soft));
+}
+
+.seo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+}
+
+.seo-grid article {
+  min-height: 260px;
+  background: var(--panel);
+  padding: 28px;
+}
+
+.seo-grid span {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: var(--gold-strong);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.seo-grid h3,
+.faq-block h3 {
+  margin-bottom: 12px;
+  font-size: 23px;
+  line-height: 1.3;
+}
+
+.faq-block {
+  margin-top: 34px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 28px;
+}
+
+.faq-block details {
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+}
+
+.faq-block details:first-of-type {
+  margin-top: 6px;
+}
+
+.faq-block summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.faq-block p {
+  margin: 12px 0 0;
 }
 
 .workspace {
@@ -1193,6 +1254,7 @@ select option {
   }
 
   .feature-strip,
+  .seo-grid,
   .workspace,
   .template-grid,
   .market {
@@ -1265,6 +1327,7 @@ select option {
   }
 
   .feature-strip article,
+  .ebook-guide,
   .studio,
   .templates,
   .market {
