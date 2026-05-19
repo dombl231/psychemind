@@ -6,6 +6,9 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const publicDir = path.join(root, "public");
 const staticFiles = ["index.html", "styles.css", "script.js", "sitemap.xml", "rss.xml", "rss", "robots.txt"];
 const turnstileSiteKey = process.env.TURNSTILE_SITE_KEY || "";
+const tossClientKey = process.env.TOSS_CLIENT_KEY || "";
+const productName = process.env.TOSS_PRODUCT_NAME || "MONOGRAPH AI 전자책 제작 이용권";
+const productAmount = Number(process.env.TOSS_PRODUCT_AMOUNT || 9900);
 
 await fs.rm(publicDir, { recursive: true, force: true });
 await fs.mkdir(publicDir, { recursive: true });
@@ -16,14 +19,14 @@ for (const file of staticFiles) {
 
 await fs.writeFile(
   path.join(publicDir, "config.js"),
-  `window.MONOGRAPH_CONFIG = ${JSON.stringify({ turnstileSiteKey }, null, 2)};\n`,
+  `window.MONOGRAPH_CONFIG = ${JSON.stringify({ turnstileSiteKey, tossClientKey, productName, productAmount }, null, 2)};\n`,
   "utf8",
 );
 
 await fs.writeFile(
   path.join(publicDir, "_headers"),
   `/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://psychemind.pages.dev https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://js.tosspayments.com; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://psychemind.pages.dev https://challenges.cloudflare.com https://api.tosspayments.com; frame-src https://challenges.cloudflare.com https://*.tosspayments.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin

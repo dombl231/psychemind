@@ -25,6 +25,10 @@ OPENAI_IMAGE_MODEL=gpt-image-1.5
 ENABLE_IMAGE_GENERATION=true
 TURNSTILE_SITE_KEY=your_public_turnstile_site_key
 TURNSTILE_SECRET_KEY=your_private_turnstile_secret_key
+TOSS_CLIENT_KEY=your_toss_client_key
+TOSS_SECRET_KEY=your_toss_secret_key
+TOSS_PRODUCT_NAME=MONOGRAPH AI 전자책 제작 이용권
+TOSS_PRODUCT_AMOUNT=9900
 EBOOK_RATE_LIMIT=4
 COVER_RATE_LIMIT=8
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
@@ -34,6 +38,8 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`은 Cloudflare 빌드에서 로컬 PDF용 Playwright 브라우저 바이너리를 내려받지 않게 하는 최적화 옵션입니다.
 
 `TURNSTILE_SECRET_KEY`를 설정하면 전자책/표지 생성 API가 Cloudflare Turnstile 검증을 요구합니다. 이때 빌드 환경에도 공개값인 `TURNSTILE_SITE_KEY`를 넣어 `public/config.js`에 반영되도록 해야 합니다. `EBOOK_RATE_LIMIT`와 `COVER_RATE_LIMIT`은 같은 IP에서 1시간 동안 허용할 생성 요청 수입니다. 이 제한은 서버리스 인스턴스별 메모리 기반의 보조 방어선이므로, 유료 공개 전에는 Cloudflare WAF rate limiting도 함께 설정하세요.
+
+토스페이먼츠 결제 연동은 `TOSS_CLIENT_KEY`를 빌드 환경에 넣어 프론트 결제창을 열고, `TOSS_SECRET_KEY`를 Pages Functions 환경변수에 넣어 `/api/confirm-payment`에서 결제를 승인합니다. 토스페이먼츠 상점 심사 정보와 홈페이지 하단 사업자정보가 사업자등록증 정보와 일치해야 합니다.
 
 ## 로컬 확인
 

@@ -235,6 +235,50 @@ export async function callOpenAI(env, path, body) {
   return data;
 }
 
+export async function confirmTossPayment(env, payload) {
+  if (!env.TOSS_SECRET_KEY) {
+    throw new HttpError(503, "TOSS_SECRET_KEY가 설정되어 있지 않습니다.");
+  }
+
+  const paymentKey = cleanText(payload.paymentKey, "");
+  const orderId = cleanText(payload.orderId, "");
+  const amount = Number(payload.amount || 0);
+  const expectedAmount = Number(env.TOSS_PRODUCT_AMOUNT || 9900);
+  if (!paymentKey || !/^[A-Za-z0-9_-]{6,64}$/.test(orderId) || !Number.isInteger(amount) || amount < 1) {
+    throw new HttpError(400, "결제 승인 요청값이 올바르지 않습니다.");
+  }
+  if (amount !== expectedAmount) {
+    throw new HttpError(400, "결제 금액이 등록된 상품 금액과 일치하지 않습니다.");
+  }
+
+  const response = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${encodeBasicAuth(env.TOSS_SECRET_KEY)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ paymentKey, orderId, amount }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new HttpError(response.status, result.message || "토스페이먼츠 결제 승인에 실패했습니다.", result);
+  }
+
+  return {
+    ok: true,
+    paymentKey: result.paymentKey,
+    orderId: result.orderId,
+    amount: result.totalAmount || result.balanceAmount || amount,
+    status: result.status,
+    approvedAt: result.approvedAt,
+  };
+}
+
+function encodeBasicAuth(secretKey) {
+  if (typeof btoa === "function") return btoa(`${secretKey}:`);
+  return Buffer.from(`${secretKey}:`).toString("base64");
+}
+
 function formatOpenAIError(error = {}) {
   const message = error.message || "";
   const code = error.code || "";
@@ -658,8 +702,9 @@ function escapeHtml(value) {
 }
 
 export class HttpError extends Error {
-  constructor(status, message) {
+  constructor(status, message, details = null) {
     super(message);
     this.status = status;
+    this.details = details;
   }
 }

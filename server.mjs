@@ -220,6 +220,11 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
+    if (request.method === "POST" && url.pathname === "/api/confirm-payment") {
+      await handleConfirmPayment(request, response);
+      return;
+    }
+
     if (request.method === "GET") {
       await serveStatic(url.pathname, response);
       return;
@@ -284,6 +289,51 @@ async function handleGenerateEbook(request, response) {
   ebook.authorName = "";
   ebook.coverImage = null;
   sendJson(response, 200, { ebook });
+}
+
+async function handleConfirmPayment(request, response) {
+  const secretKey = process.env.TOSS_SECRET_KEY || "";
+  if (!secretKey) {
+    sendJson(response, 503, { error: "TOSS_SECRET_KEY가 설정되어 있지 않습니다." });
+    return;
+  }
+
+  const expectedAmount = Number(process.env.TOSS_PRODUCT_AMOUNT || 9900);
+  const body = await readJson(request);
+  const paymentKey = cleanText(body.paymentKey, "");
+  const orderId = cleanText(body.orderId, "");
+  const amount = Number(body.amount || 0);
+  if (!paymentKey || !/^[A-Za-z0-9_-]{6,64}$/.test(orderId) || !Number.isInteger(amount) || amount < 1) {
+    sendJson(response, 400, { error: "결제 승인 요청값이 올바르지 않습니다." });
+    return;
+  }
+  if (amount !== expectedAmount) {
+    sendJson(response, 400, { error: "결제 금액이 등록된 상품 금액과 일치하지 않습니다." });
+    return;
+  }
+
+  const tossResponse = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ paymentKey, orderId, amount }),
+  });
+  const data = await tossResponse.json();
+  if (!tossResponse.ok) {
+    sendJson(response, tossResponse.status, { error: data.message || "토스페이먼츠 결제 승인에 실패했습니다.", code: data.code });
+    return;
+  }
+
+  sendJson(response, 200, {
+    ok: true,
+    paymentKey: data.paymentKey,
+    orderId: data.orderId,
+    amount: data.totalAmount || data.balanceAmount || amount,
+    status: data.status,
+    approvedAt: data.approvedAt,
+  });
 }
 
 function buildEbookPrompt({ topic, audience, tone }, profile = premiumGenerationProfile()) {

@@ -20,8 +20,17 @@ const progressBar = document.querySelector("#progressBar");
 const loadingSteps = [...document.querySelectorAll("#loadingSteps li")];
 const themeToggle = document.querySelector("#themeToggle");
 const templateButtons = [...document.querySelectorAll("[data-template]")];
+const paymentButton = document.querySelector("#paymentButton");
+const paymentStatus = document.querySelector("#paymentStatus");
+const paymentProductName = document.querySelector("#paymentProductName");
+const paymentAmount = document.querySelector("#paymentAmount");
 const appConfig = window.MONOGRAPH_CONFIG || {};
 const apiBaseUrl = appConfig.apiBaseUrl || (["monographai.co.kr", "www.monographai.co.kr"].includes(window.location.hostname) ? "https://psychemind.pages.dev" : "");
+const tossClientKey = appConfig.tossClientKey || "";
+const paymentProduct = {
+  name: appConfig.productName || "MONOGRAPH AI 전자책 제작 이용권",
+  amount: Number(appConfig.productAmount || 9900),
+};
 
 let currentTemplate = "obsidian";
 let currentEbook = null;
@@ -257,6 +266,12 @@ async function checkServer() {
 }
 
 async function generateEbook() {
+  if (tossClientKey && sessionStorage.getItem("monographPaymentApproved") !== "true") {
+    setStatus("전자책 생성 전에 9,900원 이용권 결제를 완료해 주세요.");
+    setPaymentStatus("결제 완료 후 전자책 생성 버튼을 사용할 수 있습니다.");
+    return;
+  }
+
   setBusy(true, "MONOGRAPH AI 생성 요청을 보냈습니다.");
   showLoading("기획 패키지를 생성 중입니다", "주제, 독자, 수익 구조, 판매 패키지를 먼저 설계하고 있습니다.");
   updateLoadingProgress(12, 0, "기획 패키지를 생성 중입니다", "주제와 독자, 판매 구조를 분석하고 있습니다.");
@@ -569,6 +584,116 @@ function getFileNameFromResponse(response) {
   return match ? decodeURIComponent(match[1] || match[2]) : "";
 }
 
+function setPaymentStatus(message) {
+  if (paymentStatus) paymentStatus.textContent = message;
+}
+
+function formatWon(amount) {
+  return `${Number(amount || 0).toLocaleString("ko-KR")}원`;
+}
+
+function createPaymentId(prefix) {
+  const randomPart = crypto.getRandomValues(new Uint32Array(4));
+  return `${prefix}_${Date.now()}_${Array.from(randomPart, (value) => value.toString(36)).join("")}`.slice(0, 64);
+}
+
+function getCustomerKey() {
+  const storageKey = "monographCustomerKey";
+  let customerKey = localStorage.getItem(storageKey);
+  if (!customerKey) {
+    customerKey = createPaymentId("customer");
+    localStorage.setItem(storageKey, customerKey);
+  }
+  return customerKey;
+}
+
+async function requestTossPayment() {
+  if (!paymentButton) return;
+  if (!tossClientKey) {
+    setPaymentStatus("토스페이먼츠 클라이언트 키를 먼저 설정해 주세요.");
+    return;
+  }
+  if (!window.TossPayments) {
+    setPaymentStatus("토스페이먼츠 결제창 스크립트를 불러오지 못했습니다.");
+    return;
+  }
+
+  const orderId = createPaymentId("order");
+  const successUrl = `${window.location.origin}${window.location.pathname}?payment=success#payment`;
+  const failUrl = `${window.location.origin}${window.location.pathname}?payment=fail#payment`;
+  sessionStorage.setItem("monographPendingPayment", JSON.stringify({ orderId, amount: paymentProduct.amount }));
+  paymentButton.disabled = true;
+  setPaymentStatus("토스페이먼츠 결제창을 여는 중입니다.");
+
+  try {
+    const tossPayments = TossPayments(tossClientKey);
+    const payment = tossPayments.payment({ customerKey: getCustomerKey() });
+    await payment.requestPayment({
+      method: "CARD",
+      amount: { value: paymentProduct.amount, currency: "KRW" },
+      orderId,
+      orderName: paymentProduct.name,
+      customerMobilePhone: "01057503089",
+      successUrl,
+      failUrl,
+    });
+  } catch (error) {
+    paymentButton.disabled = false;
+    setPaymentStatus(error?.message || "결제 요청 중 오류가 발생했습니다.");
+  }
+}
+
+async function handlePaymentRedirect() {
+  if (!paymentStatus) return;
+
+  if (paymentProductName) paymentProductName.textContent = paymentProduct.name;
+  if (paymentAmount) paymentAmount.textContent = formatWon(paymentProduct.amount);
+  if (paymentButton) paymentButton.textContent = `${formatWon(paymentProduct.amount)} 결제하기`;
+  if (!tossClientKey) {
+    if (paymentButton) paymentButton.disabled = true;
+    setPaymentStatus("TOSS_CLIENT_KEY 설정 후 결제 테스트를 진행할 수 있습니다.");
+  } else {
+    setPaymentStatus("결제 준비가 완료되었습니다.");
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const paymentState = params.get("payment");
+  if (paymentState === "fail") {
+    setPaymentStatus(params.get("message") || "결제가 완료되지 않았습니다.");
+    return;
+  }
+  if (paymentState !== "success") return;
+
+  const paymentKey = params.get("paymentKey");
+  const orderId = params.get("orderId");
+  const amount = Number(params.get("amount"));
+  const pendingPayment = JSON.parse(sessionStorage.getItem("monographPendingPayment") || "{}");
+  if (!paymentKey || !orderId || !amount || pendingPayment.orderId !== orderId || Number(pendingPayment.amount) !== amount) {
+    setPaymentStatus("결제 승인값을 확인할 수 없습니다. 주문 정보를 다시 확인해 주세요.");
+    return;
+  }
+
+  if (paymentButton) paymentButton.disabled = true;
+  setPaymentStatus("결제 승인 처리 중입니다.");
+  try {
+    const response = await fetch(apiUrl("/api/confirm-payment"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentKey, orderId, amount }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "결제 승인에 실패했습니다.");
+    sessionStorage.removeItem("monographPendingPayment");
+    sessionStorage.setItem("monographPaymentApproved", "true");
+    setPaymentStatus(`결제가 승인되었습니다. 주문번호 ${data.orderId}`);
+    setStatus("결제가 완료되었습니다. 이제 전자책 생성을 시작할 수 있습니다.");
+    window.history.replaceState({}, "", `${window.location.pathname}#payment`);
+  } catch (error) {
+    if (paymentButton) paymentButton.disabled = false;
+    setPaymentStatus(error.message || "결제 승인 중 오류가 발생했습니다.");
+  }
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -588,6 +713,7 @@ templateButtons.forEach((button) => {
 });
 
 downloadButton.addEventListener("click", downloadCurrentEbook);
+if (paymentButton) paymentButton.addEventListener("click", requestTossPayment);
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light-mode");
@@ -595,4 +721,5 @@ themeToggle.addEventListener("click", () => {
 
 currentEbook = normalizeEbook(sampleEbook);
 renderPreview();
+handlePaymentRedirect();
 checkServer();
